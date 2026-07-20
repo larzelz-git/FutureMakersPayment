@@ -789,11 +789,16 @@ function renderInsights(data) {
   const concentration = topThree.reduce((sum, item) => sum + item.actual, 0);
   const concentrationShare = data.actualGrandTotal > 0 ? (concentration / data.actualGrandTotal) * 100 : 0;
   const highestSubcategory = data.activeRows[0];
+  const unpaidRows = data.rows.filter((item) => item.budget > 0 && item.actual < item.budget);
+  const unpaidRemainingTotal = unpaidRows.reduce((sum, item) => sum + Math.max(item.budget - item.actual, 0), 0);
   const overBudget = data.categories
     .filter((item) => item.budget > 0 && item.actual > item.budget)
     .sort((left, right) => right.actual - right.budget - (left.actual - left.budget))[0];
 
   const insights = [
+    unpaidRemainingTotal > 0
+      ? `ยอดคงเหลือที่ยังไม่จ่ายให้ครบคือ ${formatCurrency(unpaidRemainingTotal)} จาก ${unpaidRows.length} รายการย่อยที่ยังจ่ายไม่ครบ`
+      : "ตอนนี้ไม่มีรายการย่อยที่ยังจ่ายไม่ครบ",
     `3 หมวดหลักแรกกินสัดส่วน ${formatPercent(concentrationShare)} ของยอดจ่ายจริงทั้งหมด`,
     highestSubcategory
       ? `หมวดย่อยที่จ่ายจริงสูงสุดคือ ${highestSubcategory.subcategory} ในหมวด ${highestSubcategory.category} มูลค่า ${formatCurrency(highestSubcategory.actual)}`
