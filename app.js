@@ -16,6 +16,17 @@ let detailTableState = {
   globalQuery: "",
 };
 const SOURCE_STORAGE_KEY = "summary-dashboard-source-config";
+const SOURCE_URL_KEYS = [
+  "spreadsheetUrl",
+  "spreadsheetId",
+  "sheetName",
+  "pendingSheetName",
+  "paidSheetName",
+  "range",
+  "pendingRange",
+  "paidDetailRange",
+  "liveJsonUrl",
+];
 const DETAIL_COLUMNS = [
   { key: "category", label: "หมวดหลัก", type: "text" },
   { key: "subcategory", label: "หมวดย่อย", type: "text" },
@@ -230,17 +241,47 @@ function setRefreshDisabled(disabled) {
   }
 }
 
+function getUrlSourceConfig() {
+  const searchParams = new URLSearchParams(window.location.search);
+  const spreadsheetUrl = searchParams.get("spreadsheetUrl") || searchParams.get("sourceUrl") || searchParams.get("url");
+  const spreadsheetId = searchParams.get("spreadsheetId") || searchParams.get("sourceId") || searchParams.get("id");
+  const sourceConfig = {};
+
+  if (spreadsheetUrl) {
+    sourceConfig.spreadsheetUrl = spreadsheetUrl;
+    sourceConfig.spreadsheetId = spreadsheetId || extractSpreadsheetId(spreadsheetUrl);
+  } else if (spreadsheetId) {
+    sourceConfig.spreadsheetId = spreadsheetId;
+  }
+
+  SOURCE_URL_KEYS.forEach((key) => {
+    const value = searchParams.get(key);
+
+    if (value) {
+      sourceConfig[key] = value;
+    }
+  });
+
+  if (Object.keys(sourceConfig).length) {
+    sourceConfig.fromUrl = true;
+  }
+
+  return sourceConfig;
+}
+
 function getSourceConfig() {
   const defaultSource = window.SUMMARY_DASHBOARD_DATA.source;
+  const urlSource = getUrlSourceConfig();
 
   try {
     const saved = JSON.parse(window.localStorage.getItem(SOURCE_STORAGE_KEY) || "{}");
     return {
       ...defaultSource,
       ...saved,
+      ...urlSource,
     };
   } catch (error) {
-    return { ...defaultSource };
+    return { ...defaultSource, ...urlSource };
   }
 }
 
@@ -251,10 +292,12 @@ function saveLocalSourceConfig(sourceConfig) {
       spreadsheetUrl: sourceConfig.spreadsheetUrl,
       spreadsheetId: sourceConfig.spreadsheetId,
       sheetName: sourceConfig.sheetName,
+      range: sourceConfig.range,
       pendingSheetName: sourceConfig.pendingSheetName,
       pendingRange: sourceConfig.pendingRange,
       paidSheetName: sourceConfig.paidSheetName,
       paidDetailRange: sourceConfig.paidDetailRange,
+      liveJsonUrl: sourceConfig.liveJsonUrl,
     })
   );
 }
@@ -264,6 +307,27 @@ function updateGlobalSource(sourceConfig) {
     ...window.SUMMARY_DASHBOARD_DATA.source,
     ...sourceConfig,
   };
+}
+
+function buildSourceShareUrl(sourceConfig) {
+  const url = new URL(window.location.href);
+
+  SOURCE_URL_KEYS.forEach((key) => {
+    url.searchParams.delete(key);
+  });
+  ["sourceUrl", "url", "sourceId", "id", "fromUrl"].forEach((key) => {
+    url.searchParams.delete(key);
+  });
+
+  SOURCE_URL_KEYS.forEach((key) => {
+    const value = sourceConfig[key];
+
+    if (value) {
+      url.searchParams.set(key, value);
+    }
+  });
+
+  return url.toString();
 }
 
 function requestJsonp(url) {
@@ -520,7 +584,19 @@ async function fetchLiveSummaryData() {
   const liveJsonUrl = fallback.source.liveJsonUrl;
 
   if (liveJsonUrl) {
-    const response = await fetch(liveJsonUrl, { cache: "no-store" });
+    const url = new URL(liveJsonUrl);
+
+    if (fallback.source.fromUrl) {
+      SOURCE_URL_KEYS.forEach((key) => {
+        const value = fallback.source[key];
+
+        if (value && key !== "liveJsonUrl") {
+          url.searchParams.set(key, value);
+        }
+      });
+    }
+
+    const response = await fetch(url.toString(), { cache: "no-store" });
     if (!response.ok) {
       throw new Error(`Live JSON fetch failed: ${response.status}`);
     }
@@ -598,6 +674,7 @@ function renderSourceInfo(data) {
   const snapshotDate = document.getElementById("snapshot-date");
   const sourceLinkInput = document.getElementById("source-link-input");
   const sourceSheetNameInput = document.getElementById("source-sheet-name-input");
+  const sourceShareUrl = document.getElementById("source-share-url");
 
   if (sourceLink) {
     sourceLink.href = data.source.spreadsheetUrl || "#";
@@ -618,6 +695,10 @@ function renderSourceInfo(data) {
 
   if (sourceSheetNameInput) {
     sourceSheetNameInput.value = data.source.sheetName || "";
+  }
+
+  if (sourceShareUrl) {
+    sourceShareUrl.value = buildSourceShareUrl(data.source);
   }
 }
 
@@ -867,11 +948,41 @@ function setupSourceControls() {
   const applyButton = document.getElementById("source-apply-button");
   const sourceLinkInput = document.getElementById("source-link-input");
   const sourceSheetNameInput = document.getElementById("source-sheet-name-input");
+  const sourceShareUrl = document.getElementById("source-share-url");
+  const copyUrlButton = document.getElementById("source-copy-url-button");
   const sourceModal = document.getElementById("source-modal");
   const openButton = document.getElementById("source-modal-open-button");
   const closeButton = document.getElementById("source-modal-close-button");
 
+  function getPendingSourceConfig() {
+    const spreadsheetUrl = sourceLinkInput.value.trim();
+    const sheetName = sourceSheetNameInput.value.trim();
+    const spreadsheetId = extractSpreadsheetId(spreadsheetUrl);
+
+    return {
+      spreadsheetUrl,
+      spreadsheetId,
+      sheetName: sheetName || "Summary",
+      pendingSheetName: window.SUMMARY_DASHBOARD_DATA.source.pendingSheetName || "เตรียมจ่าย",
+      range: window.SUMMARY_DASHBOARD_DATA.source.range || "A:F",
+      pendingRange: window.SUMMARY_DASHBOARD_DATA.source.pendingRange || "A:G",
+      paidSheetName: window.SUMMARY_DASHBOARD_DATA.source.paidSheetName || "จ่ายแล้ว",
+      paidDetailRange: window.SUMMARY_DASHBOARD_DATA.source.paidDetailRange || "G:V",
+      liveJsonUrl: window.SUMMARY_DASHBOARD_DATA.source.liveJsonUrl || "",
+    };
+  }
+
+  function updateShareUrlPreview() {
+    if (sourceShareUrl) {
+      sourceShareUrl.value = buildSourceShareUrl({
+        ...window.SUMMARY_DASHBOARD_DATA.source,
+        ...getPendingSourceConfig(),
+      });
+    }
+  }
+
   function openModal() {
+    updateShareUrlPreview();
     sourceModal.hidden = false;
   }
 
@@ -887,21 +998,23 @@ function setupSourceControls() {
     }
   });
 
-  applyButton.addEventListener("click", async () => {
-    const spreadsheetUrl = sourceLinkInput.value.trim();
-    const sheetName = sourceSheetNameInput.value.trim();
-    const spreadsheetId = extractSpreadsheetId(spreadsheetUrl);
+  sourceLinkInput.addEventListener("input", updateShareUrlPreview);
+  sourceSheetNameInput.addEventListener("input", updateShareUrlPreview);
 
-    const sourceConfig = {
-      spreadsheetUrl,
-      spreadsheetId,
-      sheetName: sheetName || "Summary",
-      pendingSheetName: window.SUMMARY_DASHBOARD_DATA.source.pendingSheetName || "เตรียมจ่าย",
-      range: window.SUMMARY_DASHBOARD_DATA.source.range || "A:F",
-      pendingRange: window.SUMMARY_DASHBOARD_DATA.source.pendingRange || "A:G",
-      paidSheetName: window.SUMMARY_DASHBOARD_DATA.source.paidSheetName || "จ่ายแล้ว",
-      paidDetailRange: window.SUMMARY_DASHBOARD_DATA.source.paidDetailRange || "G:V",
-    };
+  copyUrlButton.addEventListener("click", async () => {
+    updateShareUrlPreview();
+
+    try {
+      await navigator.clipboard.writeText(sourceShareUrl.value);
+      setLiveStatus("คัดลอก URL พร้อม Data Source แล้ว");
+    } catch (error) {
+      sourceShareUrl.select();
+      setLiveStatus("คัดลอกอัตโนมัติไม่ได้ เลือก URL ให้แล้ว");
+    }
+  });
+
+  applyButton.addEventListener("click", async () => {
+    const sourceConfig = getPendingSourceConfig();
 
     applyButton.disabled = true;
     setLiveStatus("กำลังบันทึก Data Source...");

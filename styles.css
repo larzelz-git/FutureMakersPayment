@@ -207,6 +207,10 @@ h2 {
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.75), rgba(239, 227, 209, 0.9));
 }
 
+.source-card-wide {
+  grid-column: 1 / -1;
+}
+
 .source-card span {
   display: block;
   margin-bottom: 8px;

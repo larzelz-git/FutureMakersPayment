@@ -5,7 +5,7 @@ function doGet(event) {
     return saveSourceConfig(params);
   }
 
-  var sourceConfig = getSourceConfig();
+  var sourceConfig = Object.assign({}, getSourceConfig(), getRequestSourceConfig(params));
   var spreadsheetId = sourceConfig.spreadsheetId;
   var spreadsheetUrl = sourceConfig.spreadsheetUrl;
   var sheetName = sourceConfig.sheetName;
@@ -102,6 +102,34 @@ function getDefaultSourceConfig() {
     pendingRange: 'A:G',
     paidDetailRange: 'G:V'
   };
+}
+
+function getRequestSourceConfig(params) {
+  var sourceConfig = {};
+  var spreadsheetUrl = params.spreadsheetUrl || params.sourceUrl || params.url || '';
+  var spreadsheetId = params.spreadsheetId || params.sourceId || params.id || '';
+
+  if (spreadsheetUrl) {
+    sourceConfig.spreadsheetUrl = spreadsheetUrl;
+    sourceConfig.spreadsheetId = spreadsheetId || extractSpreadsheetId(spreadsheetUrl);
+  } else if (spreadsheetId) {
+    sourceConfig.spreadsheetId = spreadsheetId;
+  }
+
+  [
+    'sheetName',
+    'pendingSheetName',
+    'paidSheetName',
+    'range',
+    'pendingRange',
+    'paidDetailRange'
+  ].forEach(function(key) {
+    if (params[key]) {
+      sourceConfig[key] = params[key];
+    }
+  });
+
+  return sourceConfig;
 }
 
 function saveSourceConfig(params) {
