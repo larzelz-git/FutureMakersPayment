@@ -789,7 +789,9 @@ function renderInsights(data) {
   const concentration = topThree.reduce((sum, item) => sum + item.actual, 0);
   const concentrationShare = data.actualGrandTotal > 0 ? (concentration / data.actualGrandTotal) * 100 : 0;
   const highestSubcategory = data.activeRows[0];
-  const unpaidCategories = data.categories.filter((item) => item.budget > 0 && item.actual < item.budget);
+  const unpaidCategories = data.categories.filter(
+    (item) => item.category !== "ค่าใช้จ่ายแฝง" && item.budget > 0 && item.actual < item.budget
+  );
   const unpaidRemainingTotal = unpaidCategories.reduce((sum, item) => sum + Math.max(item.budget - item.actual, 0), 0);
   const overBudget = data.categories
     .filter((item) => item.budget > 0 && item.actual > item.budget)
