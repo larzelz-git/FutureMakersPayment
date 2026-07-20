@@ -635,6 +635,18 @@ th:nth-child(4) .sortable-header {
   text-align: right;
 }
 
+.detail-total-row th {
+  padding-bottom: 6px;
+  border-bottom: 0;
+  color: var(--forest);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.detail-total-row th:nth-child(4) {
+  font-size: 1.2rem;
+}
+
 .filter-row th {
   padding-top: 0;
 }
