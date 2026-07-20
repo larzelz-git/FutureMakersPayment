@@ -16,7 +16,7 @@
     <div class="page-shell">
       <header class="hero">
         <div>
-          <p class="eyebrow">Summary Dashboard (V.20260720.0818)</p>
+          <p class="eyebrow">Summary Dashboard (V.20260720.0822)</p>
           <h1>สรุปรายจ่ายจากชีต `Summary`</h1>
         </div>
         <div class="hero-meta">
@@ -121,18 +121,30 @@
             </div>
           </article>
 
-          <article class="panel spotlight">
-            <div class="panel-heading">
-              <div>
-                <p class="section-label">Biggest Driver</p>
-                <h2>หมวดที่ใช้เงินสูงสุด</h2>
+          <aside class="side-stack" aria-label="ภาพรวมเร็ว">
+            <article class="panel spotlight">
+              <div class="panel-heading">
+                <div>
+                  <p class="section-label">Biggest Driver</p>
+                  <h2>หมวดที่ใช้เงินสูงสุด</h2>
+                </div>
               </div>
-            </div>
-            <div id="top-category-card"></div>
-          </article>
+              <div id="top-category-card"></div>
+            </article>
+
+            <article class="panel note-panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="section-label">Quick Notes</p>
+                  <h2>มุมมองเร็ว</h2>
+                </div>
+              </div>
+              <ul id="insight-list" class="insight-list"></ul>
+            </article>
+          </aside>
         </section>
 
-        <section class="content-grid">
+        <section class="content-grid detail-grid">
           <article class="panel">
             <div class="panel-heading">
               <div>
@@ -150,16 +162,6 @@
                 <tbody id="subcategory-body"></tbody>
               </table>
             </div>
-          </article>
-
-          <article class="panel note-panel">
-            <div class="panel-heading">
-              <div>
-                <p class="section-label">Quick Notes</p>
-                <h2>มุมมองเร็ว</h2>
-              </div>
-            </div>
-            <ul id="insight-list" class="insight-list"></ul>
           </article>
         </section>
       </main>
@@ -216,7 +218,7 @@
       </div>
     </div>
 
-    <script src="./summary-data.js?v=20260720.0818"></script>
-    <script src="./app.js?v=20260720.0818"></script>
+    <script src="./summary-data.js?v=20260720.0822"></script>
+    <script src="./app.js?v=20260720.0822"></script>
   </body>
 </html>
