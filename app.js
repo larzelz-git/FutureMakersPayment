@@ -1194,6 +1194,7 @@ function bootstrap() {
     if (dashboardState) {
       detailTableState.globalQuery = event.target.value;
       renderTableRows(dashboardState);
+      renderDetailHead(dashboardState);
     }
   });
 
