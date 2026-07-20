@@ -868,6 +868,9 @@ function renderDetailHead(data) {
   const columns = data.paidDetailColumns || DETAIL_COLUMNS;
   const filteredRows = getFilteredSortedDetailRows(data);
   const visibleTotal = filteredRows.reduce((sum, row) => sum + row.amount, 0);
+  const selectedVisibleCount = filteredRows.filter((row) => detailTableState.selectedRows.has(row.id)).length;
+  const allVisibleSelected = filteredRows.length > 0 && selectedVisibleCount === filteredRows.length;
+  const partiallySelected = selectedVisibleCount > 0 && !allVisibleSelected;
   const selectedTotal = filteredRows.reduce(
     (sum, row) => (detailTableState.selectedRows.has(row.id) ? sum + row.amount : sum),
     0
@@ -891,7 +894,16 @@ function renderDetailHead(data) {
       ).join("")}
     </tr>
     <tr>
-      <th class="select-column"></th>
+      <th class="select-column">
+        <input
+          class="detail-row-checkbox select-all-checkbox"
+          type="checkbox"
+          aria-label="เลือกทั้งหมด"
+          data-detail-select-all
+          ${allVisibleSelected ? "checked" : ""}
+          ${filteredRows.length === 0 ? "disabled" : ""}
+        />
+      </th>
       ${columns.map((column) => {
         const isActive = detailTableState.sortKey === column.key;
         const directionLabel = isActive ? (detailTableState.sortDirection === "asc" ? " ↑" : " ↓") : "";
@@ -922,6 +934,24 @@ function renderDetailHead(data) {
       ).join("")}
     </tr>
   `;
+
+  const selectAllCheckbox = root.querySelector("[data-detail-select-all]");
+
+  if (selectAllCheckbox) {
+    selectAllCheckbox.indeterminate = partiallySelected;
+    selectAllCheckbox.addEventListener("change", () => {
+      filteredRows.forEach((row) => {
+        if (selectAllCheckbox.checked) {
+          detailTableState.selectedRows.add(row.id);
+        } else {
+          detailTableState.selectedRows.delete(row.id);
+        }
+      });
+
+      renderTableRows(data);
+      renderDetailHead(data);
+    });
+  }
 
   root.querySelectorAll("[data-detail-sort]").forEach((button) => {
     button.addEventListener("click", () => {
