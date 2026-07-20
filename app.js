@@ -134,7 +134,7 @@ function preparePaidDetailRows(rawRows) {
         paidDate,
       };
     })
-    .filter((row) => row.category || row.subcategory || row.paidDate || row.description || row.amount > 0);
+    .filter((row) => row.category && row.subcategory);
 }
 
 function prepareData(sourceData) {
