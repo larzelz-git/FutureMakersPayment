@@ -307,6 +307,10 @@ h2 {
   margin-bottom: 20px;
 }
 
+.detail-grid {
+  grid-template-columns: 1fr;
+}
+
 .panel {
   padding: 24px;
 }
@@ -555,8 +559,35 @@ h2 {
   background: radial-gradient(circle, rgba(217, 157, 61, 0.28), transparent 68%);
 }
 
+.side-stack {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.side-stack .panel {
+  padding: 18px;
+}
+
+.side-stack .panel-heading {
+  margin-bottom: 10px;
+}
+
+.side-stack .section-label {
+  margin-bottom: 6px;
+  font-size: 0.72rem;
+}
+
+.side-stack h2 {
+  font-size: 1.05rem;
+}
+
 .top-category-card {
   padding: 22px;
+}
+
+.side-stack .top-category-card {
+  padding: 10px 0 2px;
 }
 
 .top-category-name {
@@ -565,10 +596,19 @@ h2 {
   line-height: 1;
 }
 
+.side-stack .top-category-name {
+  font-size: 1.45rem;
+}
+
 .top-category-amount {
   margin: 14px 0 4px;
   font-size: 2.2rem;
   font-weight: 700;
+}
+
+.side-stack .top-category-amount {
+  margin: 8px 0 2px;
+  font-size: 1.65rem;
 }
 
 .top-category-share {
@@ -709,15 +749,16 @@ tbody tr:hover {
 
 .insight-list {
   display: grid;
-  gap: 12px;
+  gap: 8px;
   padding: 0;
   margin: 0;
   list-style: none;
 }
 
 .note-panel li {
-  padding: 16px;
-  line-height: 1.6;
+  padding: 12px;
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
 
 @media (max-width: 960px) {
