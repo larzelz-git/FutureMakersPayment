@@ -808,6 +808,42 @@ function getDetailValue(row, key) {
   return row[key] == null ? "" : row[key];
 }
 
+function getFilteredSortedDetailRows(data) {
+  const normalizedGlobalQuery = detailTableState.globalQuery.trim().toLowerCase();
+  const columns = data.paidDetailColumns || DETAIL_COLUMNS;
+
+  return data.paidDetails
+    .filter((row) => {
+      const values = columns.map((column) => String(getDetailValue(row, column.key)).toLowerCase());
+
+      if (normalizedGlobalQuery && !values.some((value) => value.includes(normalizedGlobalQuery))) {
+        return false;
+      }
+
+      return columns.every((column) => {
+        const filterValue = (detailTableState.filters[column.key] || "").trim().toLowerCase();
+
+        if (!filterValue) {
+          return true;
+        }
+
+        return String(getDetailValue(row, column.key)).toLowerCase().includes(filterValue);
+      });
+    })
+    .sort((left, right) => {
+      const column = columns.find((item) => item.key === detailTableState.sortKey) || columns[0];
+      const leftValue = getDetailValue(left, column.key);
+      const rightValue = getDetailValue(right, column.key);
+      const sortFactor = detailTableState.sortDirection === "asc" ? 1 : -1;
+
+      if (column.type === "number") {
+        return (Number(leftValue) - Number(rightValue)) * sortFactor;
+      }
+
+      return String(leftValue).localeCompare(String(rightValue), "th") * sortFactor;
+    });
+}
+
 function renderDetailHead(data) {
   const root = document.getElementById("detail-head");
 
@@ -815,9 +851,22 @@ function renderDetailHead(data) {
     return;
   }
 
+  const columns = data.paidDetailColumns || DETAIL_COLUMNS;
+  const filteredRows = getFilteredSortedDetailRows(data);
+  const visibleTotal = filteredRows.reduce((sum, row) => sum + row.amount, 0);
+
   root.innerHTML = `
+    <tr class="detail-total-row">
+      ${columns.map(
+        (column) => `
+          <th>
+            ${column.key === "amount" ? formatCurrency(visibleTotal) : column.key === "description" ? "ยอดรวมทั้งหมด" : ""}
+          </th>
+        `
+      ).join("")}
+    </tr>
     <tr>
-      ${(data.paidDetailColumns || DETAIL_COLUMNS).map((column) => {
+      ${columns.map((column) => {
         const isActive = detailTableState.sortKey === column.key;
         const directionLabel = isActive ? (detailTableState.sortDirection === "asc" ? " ↑" : " ↓") : "";
 
@@ -831,7 +880,7 @@ function renderDetailHead(data) {
       }).join("")}
     </tr>
     <tr class="filter-row">
-      ${(data.paidDetailColumns || DETAIL_COLUMNS).map(
+      ${columns.map(
         (column) => `
           <th>
             <input
@@ -858,8 +907,8 @@ function renderDetailHead(data) {
         detailTableState.sortDirection = "asc";
       }
 
-      renderDetailHead(data);
       renderTableRows(data);
+      renderDetailHead(data);
     });
   });
 
@@ -867,50 +916,19 @@ function renderDetailHead(data) {
     input.addEventListener("input", () => {
       detailTableState.filters[input.dataset.detailFilter] = input.value;
       renderTableRows(data);
+      renderDetailHead(data);
     });
   });
 }
 
 function renderTableRows(data) {
   const root = document.getElementById("subcategory-body");
-  const normalizedGlobalQuery = detailTableState.globalQuery.trim().toLowerCase();
 
   if (!root) {
     return;
   }
 
-  const filteredRows = data.paidDetails
-    .filter((row) => {
-      const columns = data.paidDetailColumns || DETAIL_COLUMNS;
-      const values = columns.map((column) => String(getDetailValue(row, column.key)).toLowerCase());
-
-      if (normalizedGlobalQuery && !values.some((value) => value.includes(normalizedGlobalQuery))) {
-        return false;
-      }
-
-      return columns.every((column) => {
-        const filterValue = (detailTableState.filters[column.key] || "").trim().toLowerCase();
-
-        if (!filterValue) {
-          return true;
-        }
-
-        return String(getDetailValue(row, column.key)).toLowerCase().includes(filterValue);
-      });
-    })
-    .sort((left, right) => {
-      const columns = data.paidDetailColumns || DETAIL_COLUMNS;
-      const column = columns.find((item) => item.key === detailTableState.sortKey) || columns[0];
-      const leftValue = getDetailValue(left, column.key);
-      const rightValue = getDetailValue(right, column.key);
-      const sortFactor = detailTableState.sortDirection === "asc" ? 1 : -1;
-
-      if (column.type === "number") {
-        return (Number(leftValue) - Number(rightValue)) * sortFactor;
-      }
-
-      return String(leftValue).localeCompare(String(rightValue), "th") * sortFactor;
-    });
+  const filteredRows = getFilteredSortedDetailRows(data);
 
   if (!filteredRows.length) {
     root.innerHTML = `
@@ -941,6 +959,7 @@ function setupSearch(data) {
   searchInput.addEventListener("input", (event) => {
     detailTableState.globalQuery = event.target.value;
     renderTableRows(data);
+    renderDetailHead(data);
   });
 }
 
