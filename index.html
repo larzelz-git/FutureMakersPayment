@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Summary Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+Thai:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Summary Dashboard</p>
+          <h1>สรุปรายจ่ายจากชีต `Summary`</h1>
+        </div>
+        <div class="hero-meta">
+          <div class="meta-card">
+            <span>Data Status</span>
+            <strong id="live-status">กำลังตรวจสอบ...</strong>
+            <button id="refresh-button" class="refresh-button" type="button">รีเฟรชข้อมูล</button>
+          </div>
+          <div class="meta-card">
+            <span>Spreadsheet</span>
+            <strong>Summary</strong>
+          </div>
+          <div class="meta-card">
+            <span>Snapshot</span>
+            <strong id="snapshot-date">-</strong>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section class="kpi-grid" id="kpi-grid"></section>
+
+        <section class="source-compact">
+          <button id="source-modal-open-button" class="source-open-button" type="button">จัดการ Data Source</button>
+          <span id="source-sheet-name" class="source-inline-label">-</span>
+        </section>
+
+        <section class="content-grid">
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="section-label">Category Compare</p>
+                <h2>กราฟงบเทียบหลังเตรียมจ่าย</h2>
+              </div>
+            </div>
+            <div class="panel-tabs" role="tablist" aria-label="มุมมองกราฟและเตรียมจ่าย">
+              <button
+                id="summary-tab"
+                class="panel-tab is-active"
+                type="button"
+                role="tab"
+                aria-selected="true"
+                aria-controls="summary-tab-panel"
+                data-tab-target="summary-tab-panel"
+              >
+                Summary
+              </button>
+              <button
+                id="pending-tab"
+                class="panel-tab"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                aria-controls="pending-tab-panel"
+                data-tab-target="pending-tab-panel"
+              >
+                เตรียมจ่าย
+              </button>
+            </div>
+            <div id="summary-tab-panel" class="tab-panel" role="tabpanel" aria-labelledby="summary-tab">
+              <div id="category-compare" class="category-compare"></div>
+            </div>
+            <div id="pending-tab-panel" class="tab-panel pending-shell" role="tabpanel" aria-labelledby="pending-tab" hidden>
+              <div class="pending-input-panel">
+                <div class="pending-input-heading">
+                  <div>
+                    <h3>เตรียมจ่าย</h3>
+                    <p>คัดลอกตารางจาก Google Sheets แล้ววางที่นี่ ระบบจะแสดงตัวอย่างตามโครง 5 คอลัมน์</p>
+                  </div>
+                  <div class="pending-summary" id="pending-preview-summary">0 รายการ · ฿0.00</div>
+                </div>
+                <textarea
+                  id="pending-paste-input"
+                  class="pending-paste-input"
+                  rows="6"
+                  spellcheck="false"
+                  placeholder="หมวดหลัก	หมวดย่อย	จ่ายจริงหมวดย่อย	จ่ายจริงหมวดหลัก	Desc"
+                ></textarea>
+                <div class="pending-actions">
+                  <button id="pending-preview-button" class="refresh-button" type="button">แสดงตัวอย่าง</button>
+                  <button id="pending-clear-button" class="ghost-button" type="button">ล้าง</button>
+                </div>
+              </div>
+              <div class="pending-table-wrap">
+                <table class="pending-table">
+                  <thead>
+                    <tr>
+                      <th>หมวดหลัก</th>
+                      <th>หมวดย่อย</th>
+                      <th>จ่ายจริงหมวดย่อย</th>
+                      <th>จ่ายจริงหมวดหลัก</th>
+                      <th>Desc</th>
+                    </tr>
+                  </thead>
+                  <tbody id="pending-preview-body">
+                    <tr>
+                      <td colspan="5" class="pending-empty-cell">ยังไม่มีข้อมูลเตรียมจ่าย</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel spotlight">
+            <div class="panel-heading">
+              <div>
+                <p class="section-label">Biggest Driver</p>
+                <h2>หมวดที่ใช้เงินสูงสุด</h2>
+              </div>
+            </div>
+            <div id="top-category-card"></div>
+          </article>
+        </section>
+
+        <section class="content-grid">
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="section-label">Subcategory Detail</p>
+                <h2>รายการจ่ายแล้วจากชีต `จ่ายแล้ว`</h2>
+              </div>
+              <label class="search-box">
+                <span>ค้นหา</span>
+                <input id="search-input" type="search" placeholder="ค้นหาทุกคอลัมน์" />
+              </label>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead id="detail-head"></thead>
+                <tbody id="subcategory-body"></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="panel note-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="section-label">Quick Notes</p>
+                <h2>มุมมองเร็ว</h2>
+              </div>
+            </div>
+            <ul id="insight-list" class="insight-list"></ul>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <div id="source-modal" class="modal-backdrop" hidden>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="source-modal-title">
+        <div class="panel-heading">
+          <div>
+            <p class="section-label">Data Source</p>
+            <h2 id="source-modal-title">ตั้งค่าแหล่งข้อมูล</h2>
+          </div>
+          <button id="source-modal-close-button" class="modal-close-button" type="button">ปิด</button>
+        </div>
+        <div class="source-grid">
+          <article class="source-card">
+            <span>Spreadsheet Link</span>
+            <label class="source-input-wrap">
+              <textarea
+                id="source-link-input"
+                class="source-input"
+                rows="3"
+                placeholder="วางลิงก์ Google Sheet ที่นี่"
+              ></textarea>
+            </label>
+            <a id="source-link" href="#" target="_blank" rel="noreferrer">-</a>
+          </article>
+          <article class="source-card">
+            <span>Sheet Name</span>
+            <input
+              id="source-sheet-name-input"
+              class="source-text-input"
+              type="text"
+              placeholder="เช่น Summary"
+            />
+          </article>
+        </div>
+        <div class="source-actions">
+          <button id="source-apply-button" class="refresh-button" type="button">อัปเดตแหล่งข้อมูล</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="./summary-data.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
