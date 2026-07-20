@@ -690,6 +690,16 @@ th:nth-child(5) .sortable-header {
   cursor: pointer;
 }
 
+.select-all-checkbox {
+  width: 20px;
+  height: 20px;
+}
+
+.detail-row-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .detail-total-row th {
   padding-bottom: 6px;
   border-bottom: 0;
