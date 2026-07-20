@@ -14,6 +14,7 @@ let detailTableState = {
   sortDirection: "desc",
   filters: {},
   globalQuery: "",
+  selectedRows: new Set(),
 };
 const SOURCE_STORAGE_KEY = "summary-dashboard-source-config";
 const SOURCE_URL_KEYS = [
@@ -116,15 +117,21 @@ function preparePendingRows(rawRows) {
 
 function preparePaidDetailRows(rawRows) {
   return (rawRows || [])
-    .map((row) => {
+    .map((row, index) => {
       const safeRow = Array.isArray(row) ? row : [];
+      const category = safeRow[0] || "";
+      const subcategory = safeRow[1] || "";
+      const description = safeRow[2] || "";
+      const amount = parseAmount(safeRow[3]);
+      const paidDate = safeRow[4] || "";
 
       return {
-        category: safeRow[0] || "",
-        subcategory: safeRow[1] || "",
-        description: safeRow[2] || "",
-        amount: parseAmount(safeRow[3]),
-        paidDate: safeRow[4] || "",
+        id: [category, subcategory, description, amount, paidDate, index].join("|"),
+        category,
+        subcategory,
+        description,
+        amount,
+        paidDate,
       };
     })
     .filter((row) => row.category || row.subcategory || row.paidDate || row.description || row.amount > 0);
@@ -854,18 +861,30 @@ function renderDetailHead(data) {
   const columns = data.paidDetailColumns || DETAIL_COLUMNS;
   const filteredRows = getFilteredSortedDetailRows(data);
   const visibleTotal = filteredRows.reduce((sum, row) => sum + row.amount, 0);
+  const selectedTotal = filteredRows.reduce(
+    (sum, row) => (detailTableState.selectedRows.has(row.id) ? sum + row.amount : sum),
+    0
+  );
 
   root.innerHTML = `
     <tr class="detail-total-row">
+      <th class="select-column"></th>
       ${columns.map(
         (column) => `
           <th>
-            ${column.key === "amount" ? formatCurrency(visibleTotal) : column.key === "description" ? "ยอดรวมทั้งหมด" : ""}
+            ${
+              column.key === "description"
+                ? `<span class="selected-total-label">ยอดรวมที่เลือก</span><br /><span class="selected-total-value">${formatCurrency(selectedTotal)}</span>`
+                : column.key === "amount"
+                  ? `<span>ยอดรวมทั้งหมด</span><br />${formatCurrency(visibleTotal)}`
+                  : ""
+            }
           </th>
         `
       ).join("")}
     </tr>
     <tr>
+      <th class="select-column"></th>
       ${columns.map((column) => {
         const isActive = detailTableState.sortKey === column.key;
         const directionLabel = isActive ? (detailTableState.sortDirection === "asc" ? " ↑" : " ↓") : "";
@@ -880,6 +899,7 @@ function renderDetailHead(data) {
       }).join("")}
     </tr>
     <tr class="filter-row">
+      <th class="select-column"></th>
       ${columns.map(
         (column) => `
           <th>
@@ -933,7 +953,7 @@ function renderTableRows(data) {
   if (!filteredRows.length) {
     root.innerHTML = `
       <tr>
-        <td colspan="${(data.paidDetailColumns || DETAIL_COLUMNS).length}" class="pending-empty-cell">ไม่พบรายการจ่ายแล้ว</td>
+        <td colspan="${(data.paidDetailColumns || DETAIL_COLUMNS).length + 1}" class="pending-empty-cell">ไม่พบรายการจ่ายแล้ว</td>
       </tr>
     `;
     return;
@@ -943,6 +963,14 @@ function renderTableRows(data) {
     .map(
       (row) => `
         <tr>
+          <td class="select-column">
+            <input
+              class="detail-row-checkbox"
+              type="checkbox"
+              data-detail-row-id="${escapeHtml(row.id)}"
+              ${detailTableState.selectedRows.has(row.id) ? "checked" : ""}
+            />
+          </td>
           <td>${escapeHtml(row.category)}</td>
           <td>${escapeHtml(row.subcategory)}</td>
           <td>${escapeHtml(row.description)}</td>
@@ -952,6 +980,18 @@ function renderTableRows(data) {
       `
     )
     .join("");
+
+  root.querySelectorAll("[data-detail-row-id]").forEach((checkbox) => {
+    checkbox.addEventListener("change", () => {
+      if (checkbox.checked) {
+        detailTableState.selectedRows.add(checkbox.dataset.detailRowId);
+      } else {
+        detailTableState.selectedRows.delete(checkbox.dataset.detailRowId);
+      }
+
+      renderDetailHead(data);
+    });
+  });
 }
 
 function setupSearch(data) {
