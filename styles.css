@@ -660,13 +660,22 @@ th:nth-child(5) .sortable-header {
   font-size: 1.2rem;
 }
 
+.detail-total-row th:nth-child(4) {
+  color: rgba(102, 112, 100, 0.48);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
 .selected-total-label,
 .selected-total-value {
-  color: rgba(102, 112, 100, 0.68);
+  color: rgba(102, 112, 100, 0.5);
 }
 
 .selected-total-value {
-  font-size: 1.05rem;
+  display: inline-block;
+  margin-top: 2px;
+  font-size: 0.86rem;
+  font-weight: 600;
 }
 
 .filter-row th {
