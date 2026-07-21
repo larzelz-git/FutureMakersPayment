@@ -541,6 +541,10 @@ function normalizeIncomeSummaryMatrix(matrix) {
   (matrix || []).forEach((row) => {
     const firstCell = String(row[0] || "").trim();
 
+    if (!summary.bankSummary.latestDate && row[1]) {
+      summary.bankSummary.latestDate = row[1];
+    }
+
     if (firstCell === "ข้อมูลธนาคารล่าสุด") {
       summary.bankSummary.latestDate = row[1] || "";
     }
@@ -1607,11 +1611,16 @@ function renderIncomeCompare(incomeSummary) {
 function renderBankSummary(incomeSummary) {
   const bankSummary = incomeSummary.bankSummary || { latestDate: "", accounts: [], total: 0 };
   const latestDate = document.getElementById("bank-latest-date");
+  const incomeLastUpdated = document.getElementById("income-last-updated");
   const totalBalance = document.getElementById("bank-total-balance");
   const body = document.getElementById("bank-balance-body");
 
   if (latestDate) {
     latestDate.textContent = bankSummary.latestDate || "-";
+  }
+
+  if (incomeLastUpdated) {
+    incomeLastUpdated.textContent = bankSummary.latestDate || "-";
   }
 
   if (totalBalance) {

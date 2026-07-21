@@ -788,6 +788,11 @@ h2 {
   font-size: 1.05rem;
 }
 
+.income-last-updated {
+  min-width: 190px;
+  text-align: right;
+}
+
 .bank-total-card {
   display: flex;
   justify-content: space-between;
