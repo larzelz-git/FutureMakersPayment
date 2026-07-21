@@ -1566,7 +1566,7 @@ function renderIncomeCompare(incomeSummary) {
                     </div>
                     <div class="income-channel-meta">
                       <span>ยอดขาย (Mongo) ${formatCurrency(channelSales)}</span>
-                      <span>รับจริงรวม + Fee ${formatCurrency(channelReceived)}</span>
+                      <span>รับจริงรวม ${formatCurrency(channelReceived)}</span>
                       <span>Fee ${formatCurrency(channel.fee)}</span>
                     </div>
                     <div class="dual-bars">
@@ -1658,7 +1658,7 @@ function renderIncomeDashboard(rows) {
   if (kpiRoot) {
     const kpis = [
       { label: "ยอดขาย (Mongo)", value: formatCurrency(salesMongo) },
-      { label: "รับจริงรวม + Fee", value: formatCurrency(receivedTotal) },
+      { label: "รับจริงรวม", value: formatCurrency(receivedTotal) },
       { label: "Fee", value: formatCurrency(fee) },
       { label: "คงเหลือรับ", value: formatCurrency(pendingTotal) },
     ];
@@ -1682,7 +1682,7 @@ function renderIncomeDashboard(rows) {
           <div class="chip">ยอดขาย (Mongo)</div>
           <p class="top-category-amount">${formatCurrency(salesMongo)}</p>
           <div class="top-category-name">ยอดขาย (Mongo)</div>
-          <p class="top-category-share">รับจริงรวม + Fee ${formatCurrency(receivedTotal)}</p>
+          <p class="top-category-share">รับจริงรวม ${formatCurrency(receivedTotal)}</p>
         </div>
       `
       : "<p class=\"muted\">ยังไม่มีข้อมูลรายรับ</p>";
@@ -1692,7 +1692,7 @@ function renderIncomeDashboard(rows) {
     const notes = salesMongo || receivedWithFee
       ? [
           `ยอดขาย (Mongo) คือ ${formatCurrency(salesMongo)}`,
-          `รับจริงรวม + Fee คือ ${formatCurrency(receivedTotal)} คิดเป็น ${formatPercent(salesMongo > 0 ? (receivedTotal / salesMongo) * 100 : 0)}`,
+          `รับจริงรวมคือ ${formatCurrency(receivedTotal)} คิดเป็น ${formatPercent(salesMongo > 0 ? (receivedTotal / salesMongo) * 100 : 0)}`,
           `ยังต่างจากยอดขายอยู่ ${formatCurrency(salesMongo - receivedTotal)}`,
           topSource ? `ช่องทางรายรับสูงสุดคือ ${topSource[0]} มูลค่า ${formatCurrency(topSource[1])}` : "ยังไม่พบช่องทางรายรับ",
         ]
