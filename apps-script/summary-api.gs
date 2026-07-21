@@ -236,16 +236,43 @@ function normalizeIncomeSummaryValues(values) {
     receivedTotal: 0,
     fee: 0,
     receivedWithFee: 0,
-    channels: []
+    channels: [],
+    bankSummary: {
+      latestDate: '',
+      accounts: [],
+      total: 0
+    }
   };
   var channelRows = [];
+  var bankAccounts = [];
   var totalRow = null;
+  var inBankSection = false;
 
   (values || []).forEach(function(row) {
     var firstCell = String(row[0] || '').trim();
 
+    if (firstCell === 'ข้อมูลธนาคารล่าสุด') {
+      summary.bankSummary.latestDate = row[1] || '';
+    }
+
     if (firstCell === 'รวมทั้งหมด') {
       totalRow = row;
+    } else if (firstCell === 'สรุปยอดคงเหลือธนาคาร') {
+      inBankSection = true;
+    } else if (inBankSection && firstCell === 'ธนาคาร / บัญชี') {
+      return;
+    } else if (inBankSection && firstCell) {
+      var bankBalance = parseAmount(row[3] || row[2] || row[1]);
+
+      if (firstCell.indexOf('รวม') !== -1) {
+        summary.bankSummary.total = bankBalance;
+        inBankSection = false;
+      } else {
+        bankAccounts.push({
+          account: firstCell,
+          balance: bankBalance
+        });
+      }
     } else if (
       firstCell &&
       ['ข้อมูลธนาคารล่าสุด', 'ช่องทาง', 'ยอดขายรวม', 'เงินเข้าจริงสุทธิ'].indexOf(firstCell) === -1 &&
@@ -301,6 +328,13 @@ function normalizeIncomeSummaryValues(values) {
   }
 
   summary.channels = channelRows;
+  summary.bankSummary.accounts = bankAccounts;
+
+  if (!summary.bankSummary.total) {
+    summary.bankSummary.total = bankAccounts.reduce(function(sum, item) {
+      return sum + item.balance;
+    }, 0);
+  }
 
   return summary;
 }
