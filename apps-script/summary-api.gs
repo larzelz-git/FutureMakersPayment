@@ -290,6 +290,7 @@ function normalizeIncomeSummaryValues(values) {
         channelRows.push({
           channel: firstCell,
           salesMongo: salesMongo,
+          feePercent: parseAmount(row[2]),
           fee: fee,
           receivedWithFee: receivedWithFee,
           netReceived: parseAmount(row[7]),
