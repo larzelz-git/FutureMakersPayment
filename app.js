@@ -578,9 +578,9 @@ function normalizeIncomeSummaryMatrix(matrix) {
           salesMongo,
           fee,
           receivedWithFee,
-          netReceived: parseAmount(row[8]),
-          gap: parseAmount(row[9]),
-          receivedPercent: parseAmount(row[10]),
+          netReceived: parseAmount(row[7]),
+          gap: parseAmount(row[8]),
+          receivedPercent: parseAmount(row[9]),
         });
       }
     }
@@ -610,7 +610,7 @@ function normalizeIncomeSummaryMatrix(matrix) {
     summary.salesMongo = parseAmount(totalRow[1]) || summary.salesMongo;
     summary.fee = parseAmount(totalRow[3]) || summary.fee;
     summary.receivedWithFee = parseAmount(totalRow[4]) || summary.receivedWithFee;
-    summary.receivedTotal = parseAmount(totalRow[8]) || summary.receivedTotal;
+    summary.receivedTotal = parseAmount(totalRow[7]) || summary.receivedTotal;
   }
 
   if (!summary.receivedWithFee) {
@@ -1645,8 +1645,8 @@ function renderIncomeDashboard(rows) {
   const channels = incomeSummary.channels || [];
   const manualTotal = rows.reduce((sum, row) => sum + row.amount, 0);
   const total = salesMongo || manualTotal;
-  const receivedTotal = receivedWithFee || rows.filter(isIncomeReceived).reduce((sum, row) => sum + row.amount, 0);
-  const pendingTotal = Math.max(total - receivedTotal, 0);
+  const receivedTotal = parseAmount(incomeSummary.receivedTotal) || rows.filter(isIncomeReceived).reduce((sum, row) => sum + row.amount, 0);
+  const pendingTotal = Math.max(total - receivedTotal - fee, 0);
   const sourceMap = new Map();
 
   rows.forEach((row) => {
