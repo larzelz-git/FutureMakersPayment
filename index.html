@@ -16,7 +16,7 @@
     <div class="page-shell">
       <header class="hero">
         <div>
-          <p class="eyebrow">Summary Dashboard (V.20260720.0845)</p>
+          <p class="eyebrow">Summary Dashboard (V.20260721.0900)</p>
           <h1>สรุปรายจ่ายจากชีต `Summary`</h1>
         </div>
         <div class="hero-meta">
@@ -44,126 +44,258 @@
           <span id="source-sheet-name" class="source-inline-label">-</span>
         </section>
 
-        <section class="content-grid">
-          <article class="panel">
-            <div class="panel-heading">
-              <div>
-                <p class="section-label">Category Compare</p>
-                <h2>กราฟงบเทียบหลังเตรียมจ่าย</h2>
+        <section class="main-tabs" role="tablist" aria-label="เลือกมุมมองรายจ่ายหรือรายรับ">
+          <button
+            class="main-tab is-active"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            aria-controls="expense-view"
+            data-view-target="expense-view"
+          >
+            รายจ่าย
+          </button>
+          <button
+            class="main-tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="income-view"
+            data-view-target="income-view"
+          >
+            รายรับ
+          </button>
+        </section>
+
+        <div id="expense-view" class="view-panel" role="tabpanel">
+          <section class="content-grid">
+            <article class="panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="section-label">Category Compare</p>
+                  <h2>กราฟงบเทียบหลังเตรียมจ่าย</h2>
+                </div>
               </div>
-            </div>
-            <div class="panel-tabs" role="tablist" aria-label="มุมมองกราฟและเตรียมจ่าย">
-              <button
-                id="summary-tab"
-                class="panel-tab is-active"
-                type="button"
-                role="tab"
-                aria-selected="true"
-                aria-controls="summary-tab-panel"
-                data-tab-target="summary-tab-panel"
-              >
-                Summary
-              </button>
-              <button
-                id="pending-tab"
-                class="panel-tab"
-                type="button"
-                role="tab"
-                aria-selected="false"
-                aria-controls="pending-tab-panel"
-                data-tab-target="pending-tab-panel"
-              >
-                เตรียมจ่าย
-              </button>
-            </div>
-            <div id="summary-tab-panel" class="tab-panel" role="tabpanel" aria-labelledby="summary-tab">
-              <div id="category-compare" class="category-compare"></div>
-            </div>
-            <div id="pending-tab-panel" class="tab-panel pending-shell" role="tabpanel" aria-labelledby="pending-tab" hidden>
-              <div class="pending-input-panel">
-                <div class="pending-input-heading">
-                  <div>
-                    <h3>เตรียมจ่าย</h3>
-                    <p>คัดลอกตารางจาก Google Sheets แล้ววางที่นี่ ระบบจะแสดงตัวอย่างตามโครง 5 คอลัมน์</p>
+              <div class="panel-tabs" role="tablist" aria-label="มุมมองกราฟและเตรียมจ่าย">
+                <button
+                  id="summary-tab"
+                  class="panel-tab is-active"
+                  type="button"
+                  role="tab"
+                  aria-selected="true"
+                  aria-controls="summary-tab-panel"
+                  data-tab-target="summary-tab-panel"
+                >
+                  Summary
+                </button>
+                <button
+                  id="pending-tab"
+                  class="panel-tab"
+                  type="button"
+                  role="tab"
+                  aria-selected="false"
+                  aria-controls="pending-tab-panel"
+                  data-tab-target="pending-tab-panel"
+                >
+                  เตรียมจ่าย
+                </button>
+              </div>
+              <div id="summary-tab-panel" class="tab-panel" role="tabpanel" aria-labelledby="summary-tab">
+                <div id="category-compare" class="category-compare"></div>
+              </div>
+              <div id="pending-tab-panel" class="tab-panel pending-shell" role="tabpanel" aria-labelledby="pending-tab" hidden>
+                <div class="pending-input-panel">
+                  <div class="pending-input-heading">
+                    <div>
+                      <h3>เตรียมจ่าย</h3>
+                      <p>คัดลอกตารางจาก Google Sheets แล้ววางที่นี่ ระบบจะแสดงตัวอย่างตามโครง 5 คอลัมน์</p>
+                    </div>
+                    <div class="pending-summary" id="pending-preview-summary">0 รายการ · ฿0.00</div>
                   </div>
-                  <div class="pending-summary" id="pending-preview-summary">0 รายการ · ฿0.00</div>
+                  <textarea
+                    id="pending-paste-input"
+                    class="pending-paste-input"
+                    rows="6"
+                    spellcheck="false"
+                    placeholder="หมวดหลัก	หมวดย่อย	จ่ายจริงหมวดย่อย	จ่ายจริงหมวดหลัก	Desc"
+                  ></textarea>
+                  <div class="pending-actions">
+                    <button id="pending-preview-button" class="refresh-button" type="button">แสดงตัวอย่าง</button>
+                    <button id="pending-clear-button" class="ghost-button" type="button">ล้าง</button>
+                  </div>
                 </div>
-                <textarea
-                  id="pending-paste-input"
-                  class="pending-paste-input"
-                  rows="6"
-                  spellcheck="false"
-                  placeholder="หมวดหลัก	หมวดย่อย	จ่ายจริงหมวดย่อย	จ่ายจริงหมวดหลัก	Desc"
-                ></textarea>
-                <div class="pending-actions">
-                  <button id="pending-preview-button" class="refresh-button" type="button">แสดงตัวอย่าง</button>
-                  <button id="pending-clear-button" class="ghost-button" type="button">ล้าง</button>
+                <div class="pending-table-wrap">
+                  <table class="pending-table">
+                    <thead>
+                      <tr>
+                        <th>หมวดหลัก</th>
+                        <th>หมวดย่อย</th>
+                        <th>จ่ายจริงหมวดย่อย</th>
+                        <th>จ่ายจริงหมวดหลัก</th>
+                        <th>Desc</th>
+                      </tr>
+                    </thead>
+                    <tbody id="pending-preview-body">
+                      <tr>
+                        <td colspan="5" class="pending-empty-cell">ยังไม่มีข้อมูลเตรียมจ่าย</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
-              <div class="pending-table-wrap">
-                <table class="pending-table">
+            </article>
+
+            <aside class="side-stack" aria-label="ภาพรวมเร็ว">
+              <article class="panel spotlight">
+                <div class="panel-heading">
+                  <div>
+                    <p class="section-label">Biggest Driver</p>
+                    <h2>หมวดที่ใช้เงินสูงสุด</h2>
+                  </div>
+                </div>
+                <div id="top-category-card"></div>
+              </article>
+
+              <article class="panel note-panel">
+                <div class="panel-heading">
+                  <div>
+                    <p class="section-label">Quick Notes</p>
+                    <h2>มุมมองเร็ว</h2>
+                  </div>
+                </div>
+                <ul id="insight-list" class="insight-list"></ul>
+              </article>
+            </aside>
+          </section>
+
+          <section class="content-grid detail-grid">
+            <article class="panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="section-label">Subcategory Detail</p>
+                  <h2>รายการจ่ายแล้วจากชีต `จ่ายแล้ว`</h2>
+                </div>
+                <label class="search-box">
+                  <span>ค้นหา</span>
+                  <input id="search-input" type="search" placeholder="ค้นหาทุกคอลัมน์" />
+                </label>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead id="detail-head"></thead>
+                  <tbody id="subcategory-body"></tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+        </div>
+
+        <div id="income-view" class="view-panel" role="tabpanel" hidden>
+          <section class="kpi-grid income-kpi-grid" id="income-kpi-grid"></section>
+
+          <section class="content-grid">
+            <article class="panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="section-label">Income Workspace</p>
+                  <h2>พื้นที่รายรับ</h2>
+                </div>
+              </div>
+              <div class="pending-shell income-shell">
+                <div class="pending-input-panel">
+                  <div class="pending-input-heading">
+                    <div>
+                      <h3>วางข้อมูลรายรับ</h3>
+                      <p>คัดลอกตารางจากชีตแล้ววางได้เลย รองรับคอลัมน์: วันที่ / ช่องทาง / รายละเอียด / จำนวนเงิน / สถานะ</p>
+                    </div>
+                    <div class="pending-summary" id="income-preview-summary">0 รายการ · ฿0.00</div>
+                  </div>
+                  <textarea
+                    id="income-paste-input"
+                    class="pending-paste-input"
+                    rows="8"
+                    spellcheck="false"
+                    placeholder="วันที่	ช่องทาง	รายละเอียด	จำนวนเงิน	สถานะ"
+                  ></textarea>
+                  <div class="pending-actions">
+                    <button id="income-preview-button" class="refresh-button" type="button">แสดงตัวอย่าง</button>
+                    <button id="income-save-button" class="ghost-button" type="button">บันทึกบนเครื่องนี้</button>
+                    <button id="income-clear-button" class="ghost-button" type="button">ล้าง</button>
+                  </div>
+                </div>
+                <div class="pending-table-wrap">
+                  <table class="pending-table income-table">
+                    <thead>
+                      <tr>
+                        <th>วันที่</th>
+                        <th>ช่องทาง</th>
+                        <th>รายละเอียด</th>
+                        <th>จำนวนเงิน</th>
+                        <th>สถานะ</th>
+                      </tr>
+                    </thead>
+                    <tbody id="income-preview-body">
+                      <tr>
+                        <td colspan="5" class="pending-empty-cell">ยังไม่มีข้อมูลรายรับ</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </article>
+
+            <aside class="side-stack" aria-label="ภาพรวมรายรับ">
+              <article class="panel spotlight income-spotlight">
+                <div class="panel-heading">
+                  <div>
+                    <p class="section-label">Income Driver</p>
+                    <h2>แหล่งรายรับสูงสุด</h2>
+                  </div>
+                </div>
+                <div id="income-top-card"></div>
+              </article>
+
+              <article class="panel note-panel">
+                <div class="panel-heading">
+                  <div>
+                    <p class="section-label">Income Notes</p>
+                    <h2>โน้ตรายรับ</h2>
+                  </div>
+                </div>
+                <ul id="income-note-list" class="insight-list"></ul>
+              </article>
+            </aside>
+          </section>
+
+          <section class="content-grid detail-grid">
+            <article class="panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="section-label">Income Detail</p>
+                  <h2>รายการรายรับ</h2>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table>
                   <thead>
                     <tr>
-                      <th>หมวดหลัก</th>
-                      <th>หมวดย่อย</th>
-                      <th>จ่ายจริงหมวดย่อย</th>
-                      <th>จ่ายจริงหมวดหลัก</th>
-                      <th>Desc</th>
+                      <th>วันที่</th>
+                      <th>ช่องทาง</th>
+                      <th>รายละเอียด</th>
+                      <th>จำนวนเงิน</th>
+                      <th>สถานะ</th>
                     </tr>
                   </thead>
-                  <tbody id="pending-preview-body">
+                  <tbody id="income-detail-body">
                     <tr>
-                      <td colspan="5" class="pending-empty-cell">ยังไม่มีข้อมูลเตรียมจ่าย</td>
+                      <td colspan="5" class="pending-empty-cell">ยังไม่มีข้อมูลรายรับ</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
-            </div>
-          </article>
-
-          <aside class="side-stack" aria-label="ภาพรวมเร็ว">
-            <article class="panel spotlight">
-              <div class="panel-heading">
-                <div>
-                  <p class="section-label">Biggest Driver</p>
-                  <h2>หมวดที่ใช้เงินสูงสุด</h2>
-                </div>
-              </div>
-              <div id="top-category-card"></div>
             </article>
-
-            <article class="panel note-panel">
-              <div class="panel-heading">
-                <div>
-                  <p class="section-label">Quick Notes</p>
-                  <h2>มุมมองเร็ว</h2>
-                </div>
-              </div>
-              <ul id="insight-list" class="insight-list"></ul>
-            </article>
-          </aside>
-        </section>
-
-        <section class="content-grid detail-grid">
-          <article class="panel">
-            <div class="panel-heading">
-              <div>
-                <p class="section-label">Subcategory Detail</p>
-                <h2>รายการจ่ายแล้วจากชีต `จ่ายแล้ว`</h2>
-              </div>
-              <label class="search-box">
-                <span>ค้นหา</span>
-                <input id="search-input" type="search" placeholder="ค้นหาทุกคอลัมน์" />
-              </label>
-            </div>
-            <div class="table-wrap">
-              <table>
-                <thead id="detail-head"></thead>
-                <tbody id="subcategory-body"></tbody>
-              </table>
-            </div>
-          </article>
-        </section>
+          </section>
+        </div>
       </main>
     </div>
 
@@ -218,7 +350,7 @@
       </div>
     </div>
 
-    <script src="./summary-data.js?v=20260720.0845"></script>
-    <script src="./app.js?v=20260720.0845"></script>
+    <script src="./summary-data.js?v=20260721.0900"></script>
+    <script src="./app.js?v=20260721.0900"></script>
   </body>
 </html>

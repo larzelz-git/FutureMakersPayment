@@ -17,6 +17,7 @@ let detailTableState = {
   selectedRows: new Set(),
 };
 const SOURCE_STORAGE_KEY = "summary-dashboard-source-config";
+const INCOME_STORAGE_KEY = "summary-dashboard-income-rows";
 const SOURCE_URL_KEYS = [
   "spreadsheetUrl",
   "spreadsheetId",
@@ -35,6 +36,8 @@ const DETAIL_COLUMNS = [
   { key: "amount", label: "Final Amount", type: "number" },
   { key: "paidDate", label: "วันที่ชำระ", type: "text" },
 ];
+
+let incomeRows = [];
 
 function parseAmount(rawValue) {
   if (rawValue == null || rawValue === "-") {
@@ -1150,6 +1153,26 @@ function setupPanelTabs() {
   });
 }
 
+function setupMainViewTabs() {
+  const tabs = Array.from(document.querySelectorAll("[data-view-target]"));
+
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      tabs.forEach((item) => {
+        const isActive = item === tab;
+        const panel = document.getElementById(item.dataset.viewTarget);
+
+        item.classList.toggle("is-active", isActive);
+        item.setAttribute("aria-selected", String(isActive));
+
+        if (panel) {
+          panel.hidden = !isActive;
+        }
+      });
+    });
+  });
+}
+
 function parsePendingPaste(text) {
   return text
     .split(/\r?\n/)
@@ -1226,6 +1249,183 @@ function setupPendingPastePreview() {
   });
 }
 
+function parseIncomePaste(text) {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => line.split("\t").map((cell) => cell.trim()))
+    .filter((row) => row.some((cell) => cell))
+    .filter((row) => !["วันที่", "date"].includes(String(row[0] || "").toLowerCase()))
+    .map((row, index) => ({
+      id: [row[0] || "", row[1] || "", row[2] || "", row[3] || "", row[4] || "", index].join("|"),
+      date: row[0] || "",
+      source: row[1] || "",
+      description: row[2] || "",
+      amount: parseAmount(row[3]),
+      status: row[4] || "รับแล้ว",
+    }))
+    .filter((row) => row.source || row.description || row.amount > 0);
+}
+
+function loadIncomeRows() {
+  try {
+    return JSON.parse(window.localStorage.getItem(INCOME_STORAGE_KEY) || "[]").map((row, index) => ({
+      id: row.id || [row.date || "", row.source || "", row.description || "", row.amount || "", row.status || "", index].join("|"),
+      date: row.date || "",
+      source: row.source || "",
+      description: row.description || "",
+      amount: parseAmount(row.amount),
+      status: row.status || "รับแล้ว",
+    }));
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveIncomeRows(rows) {
+  window.localStorage.setItem(INCOME_STORAGE_KEY, JSON.stringify(rows));
+}
+
+function isIncomeReceived(row) {
+  return !String(row.status || "").includes("ค้าง");
+}
+
+function renderIncomeRows(rows) {
+  const previewBody = document.getElementById("income-preview-body");
+  const detailBody = document.getElementById("income-detail-body");
+  const summary = document.getElementById("income-preview-summary");
+  const total = rows.reduce((sum, row) => sum + row.amount, 0);
+  const rowsHtml = rows.length
+    ? rows
+        .map(
+          (row) => `
+            <tr>
+              <td>${escapeHtml(row.date)}</td>
+              <td>${escapeHtml(row.source)}</td>
+              <td>${escapeHtml(row.description)}</td>
+              <td>${formatCurrency(row.amount)}</td>
+              <td><span class="chip income-status">${escapeHtml(row.status)}</span></td>
+            </tr>
+          `
+        )
+        .join("")
+    : `<tr><td colspan="5" class="pending-empty-cell">ยังไม่มีข้อมูลรายรับ</td></tr>`;
+
+  if (summary) {
+    summary.textContent = `${rows.length} รายการ · ${formatCurrency(total)}`;
+  }
+
+  if (previewBody) {
+    previewBody.innerHTML = rowsHtml;
+  }
+
+  if (detailBody) {
+    detailBody.innerHTML = rowsHtml;
+  }
+}
+
+function renderIncomeDashboard(rows) {
+  const kpiRoot = document.getElementById("income-kpi-grid");
+  const topCard = document.getElementById("income-top-card");
+  const noteList = document.getElementById("income-note-list");
+  const total = rows.reduce((sum, row) => sum + row.amount, 0);
+  const receivedTotal = rows.filter(isIncomeReceived).reduce((sum, row) => sum + row.amount, 0);
+  const pendingTotal = rows.filter((row) => !isIncomeReceived(row)).reduce((sum, row) => sum + row.amount, 0);
+  const sourceMap = new Map();
+
+  rows.forEach((row) => {
+    const sourceName = row.source || "ไม่ระบุช่องทาง";
+    sourceMap.set(sourceName, (sourceMap.get(sourceName) || 0) + row.amount);
+  });
+
+  const topSource = Array.from(sourceMap.entries()).sort((left, right) => right[1] - left[1])[0];
+
+  if (kpiRoot) {
+    const kpis = [
+      { label: "รายรับรวม", value: formatCurrency(total) },
+      { label: "รับแล้ว", value: formatCurrency(receivedTotal) },
+      { label: "ค้างรับ", value: formatCurrency(pendingTotal) },
+      { label: "จำนวนรายการ", value: `${rows.length} รายการ` },
+    ];
+
+    kpiRoot.innerHTML = kpis
+      .map(
+        (item) => `
+          <article class="kpi-card income-kpi-card">
+            <div class="kpi-label">${item.label}</div>
+            <div class="kpi-value">${item.value}</div>
+          </article>
+        `
+      )
+      .join("");
+  }
+
+  if (topCard) {
+    topCard.innerHTML = topSource
+      ? `
+        <div class="top-category-card">
+          <div class="chip">แหล่งรายรับหลัก</div>
+          <p class="top-category-amount">${formatCurrency(topSource[1])}</p>
+          <div class="top-category-name">${escapeHtml(topSource[0])}</div>
+          <p class="top-category-share">คิดเป็น ${formatPercent(total > 0 ? (topSource[1] / total) * 100 : 0)} ของรายรับรวม</p>
+        </div>
+      `
+      : "<p class=\"muted\">ยังไม่มีข้อมูลรายรับ</p>";
+  }
+
+  if (noteList) {
+    const notes = rows.length
+      ? [
+          `มีรายรับทั้งหมด ${rows.length} รายการ รวม ${formatCurrency(total)}`,
+          `รับเงินจริงแล้ว ${formatCurrency(receivedTotal)} และค้างรับ ${formatCurrency(pendingTotal)}`,
+          topSource ? `ช่องทางรายรับสูงสุดคือ ${topSource[0]} มูลค่า ${formatCurrency(topSource[1])}` : "ยังไม่พบช่องทางรายรับ",
+        ]
+      : ["เริ่มจากวางข้อมูลรายรับทางซ้าย แล้วกดบันทึกบนเครื่องนี้", "โครงนี้พร้อมต่อเข้าชีทรายรับจริงในขั้นถัดไป"];
+
+    noteList.innerHTML = notes.map((item) => `<li>${item}</li>`).join("");
+  }
+
+  renderIncomeRows(rows);
+}
+
+function setupIncomeWorkspace() {
+  const input = document.getElementById("income-paste-input");
+  const previewButton = document.getElementById("income-preview-button");
+  const saveButton = document.getElementById("income-save-button");
+  const clearButton = document.getElementById("income-clear-button");
+
+  incomeRows = loadIncomeRows();
+  renderIncomeDashboard(incomeRows);
+
+  if (!input || !previewButton || !saveButton || !clearButton) {
+    return;
+  }
+
+  function previewRows() {
+    const rows = parseIncomePaste(input.value);
+    renderIncomeDashboard(rows.length ? rows : incomeRows);
+    return rows;
+  }
+
+  input.addEventListener("paste", () => {
+    window.setTimeout(previewRows, 0);
+  });
+  previewButton.addEventListener("click", previewRows);
+  saveButton.addEventListener("click", () => {
+    incomeRows = previewRows();
+    saveIncomeRows(incomeRows);
+    renderIncomeDashboard(incomeRows);
+    setLiveStatus("บันทึกข้อมูลรายรับบนเครื่องนี้แล้ว");
+  });
+  clearButton.addEventListener("click", () => {
+    input.value = "";
+    incomeRows = [];
+    saveIncomeRows(incomeRows);
+    renderIncomeDashboard(incomeRows);
+  });
+}
+
 function renderDashboard(sourceData) {
   const data = prepareData(sourceData);
   dashboardState = data;
@@ -1276,8 +1476,10 @@ function bootstrap() {
   });
 
   setupSourceControls();
+  setupMainViewTabs();
   setupPanelTabs();
   setupPendingPastePreview();
+  setupIncomeWorkspace();
   refreshDashboard();
 }
 
