@@ -235,10 +235,39 @@ function normalizeIncomeSummaryValues(values) {
     salesMongo: 0,
     receivedTotal: 0,
     fee: 0,
-    receivedWithFee: 0
+    receivedWithFee: 0,
+    channels: []
   };
+  var channelRows = [];
+  var totalRow = null;
 
   (values || []).forEach(function(row) {
+    var firstCell = String(row[0] || '').trim();
+
+    if (firstCell === 'รวมทั้งหมด') {
+      totalRow = row;
+    } else if (
+      firstCell &&
+      ['ข้อมูลธนาคารล่าสุด', 'ช่องทาง', 'ยอดขายรวม', 'เงินเข้าจริงสุทธิ'].indexOf(firstCell) === -1 &&
+      firstCell.indexOf('หมายเหตุ') !== 0
+    ) {
+      var salesMongo = parseAmount(row[1]);
+      var fee = parseAmount(row[3]);
+      var receivedWithFee = parseAmount(row[4]);
+
+      if (salesMongo > 0 || receivedWithFee > 0) {
+        channelRows.push({
+          channel: firstCell,
+          salesMongo: salesMongo,
+          fee: fee,
+          receivedWithFee: receivedWithFee,
+          netReceived: parseAmount(row[8]),
+          gap: parseAmount(row[9]),
+          receivedPercent: parseAmount(row[10])
+        });
+      }
+    }
+
     row.forEach(function(cell, cellIndex) {
       var label = String(cell || '').replace(/\s+/g, ' ').trim();
       var normalizedLabel = label.toLowerCase();
@@ -260,9 +289,18 @@ function normalizeIncomeSummaryValues(values) {
     });
   });
 
+  if (totalRow) {
+    summary.salesMongo = parseAmount(totalRow[1]) || summary.salesMongo;
+    summary.fee = parseAmount(totalRow[3]) || summary.fee;
+    summary.receivedWithFee = parseAmount(totalRow[4]) || summary.receivedWithFee;
+    summary.receivedTotal = parseAmount(totalRow[8]) || summary.receivedTotal;
+  }
+
   if (!summary.receivedWithFee) {
     summary.receivedWithFee = summary.receivedTotal + summary.fee;
   }
+
+  summary.channels = channelRows;
 
   return summary;
 }
