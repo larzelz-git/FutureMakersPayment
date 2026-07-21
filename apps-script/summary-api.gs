@@ -251,6 +251,10 @@ function normalizeIncomeSummaryValues(values) {
   (values || []).forEach(function(row) {
     var firstCell = String(row[0] || '').trim();
 
+    if (!summary.bankSummary.latestDate && row[1]) {
+      summary.bankSummary.latestDate = row[1];
+    }
+
     if (firstCell === 'ข้อมูลธนาคารล่าสุด') {
       summary.bankSummary.latestDate = row[1] || '';
     }
