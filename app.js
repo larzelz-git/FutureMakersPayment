@@ -670,6 +670,73 @@ function normalizePaidDetailPayload(matrix) {
   };
 }
 
+function parseCsvRows(csvText) {
+  const rows = [];
+  let row = [];
+  let value = "";
+  let insideQuotes = false;
+
+  for (let index = 0; index < csvText.length; index += 1) {
+    const character = csvText[index];
+    const nextCharacter = csvText[index + 1];
+
+    if (character === '"') {
+      if (insideQuotes && nextCharacter === '"') {
+        value += '"';
+        index += 1;
+      } else {
+        insideQuotes = !insideQuotes;
+      }
+    } else if (character === "," && !insideQuotes) {
+      row.push(value);
+      value = "";
+    } else if ((character === "\n" || character === "\r") && !insideQuotes) {
+      if (character === "\r" && nextCharacter === "\n") {
+        index += 1;
+      }
+      row.push(value);
+      rows.push(row);
+      row = [];
+      value = "";
+    } else {
+      value += character;
+    }
+  }
+
+  if (value !== "" || row.length) {
+    row.push(value);
+    rows.push(row);
+  }
+
+  return rows.filter((csvRow) => csvRow.some((cell) => String(cell).trim() !== ""));
+}
+
+async function fetchSheetMatrixCsv(sheetName, range, sourceOverride = null) {
+  const fallback = window.SUMMARY_DASHBOARD_DATA;
+  const source = sourceOverride || fallback.source;
+  const spreadsheetId = source.spreadsheetId || extractSpreadsheetId(source.spreadsheetUrl);
+  const url = new URL(`https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq`);
+
+  url.searchParams.set("sheet", sheetName);
+  url.searchParams.set("range", range);
+  url.searchParams.set("tqx", "out:csv");
+
+  const response = await fetch(url.toString(), { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`Google Sheet CSV fetch failed: ${response.status}`);
+  }
+
+  return parseCsvRows(await response.text());
+}
+
+async function fetchPaidDetailPayloadForSource(source) {
+  const sheetName = source.paidSheetName || "จ่ายแล้ว";
+  const range = source.paidDetailRange || "G:V";
+  const matrix = await fetchSheetMatrixCsv(sheetName, range, source);
+
+  return normalizePaidDetailPayload(matrix);
+}
+
 function fetchSheetMatrixViaScript(sheetName, range) {
   const fallback = window.SUMMARY_DASHBOARD_DATA;
   const source = fallback.source;
@@ -733,7 +800,9 @@ async function fetchLiveSummaryDataViaScript() {
     source.incomeSheetName || "Summary รายรับ",
     source.incomeRange || "A:Z"
   ).catch(() => []);
-  const paidDetailPayload = normalizePaidDetailPayload(paidDetailMatrix);
+  const paidDetailPayload = await fetchPaidDetailPayloadForSource(source).catch(() =>
+    normalizePaidDetailPayload(paidDetailMatrix)
+  );
 
   return {
     ...normalizeSheetMatrix(summaryMatrix, fallback),
@@ -797,14 +866,18 @@ async function fetchLiveSummaryData() {
       incomeSummary = await fetchIncomeSummaryForSource(mergedSource);
     }
 
+    const paidDetailPayload = await fetchPaidDetailPayloadForSource(mergedSource).catch(() => ({
+      paidDetailHeader: payload.paidDetailHeader || fallback.paidDetailHeader || [],
+      paidDetailRows: payload.paidDetailRows || fallback.paidDetailRows || [],
+    }));
+
     return {
       ...fallback,
       source: mergedSource,
       rows: payload.rows || fallback.rows,
       pendingRows: payload.pendingRows || fallback.pendingRows || [],
       incomeSummary,
-      paidDetailHeader: payload.paidDetailHeader || fallback.paidDetailHeader || [],
-      paidDetailRows: payload.paidDetailRows || fallback.paidDetailRows || [],
+      ...paidDetailPayload,
       grandTotal: payload.grandTotal || fallback.grandTotal,
       actualGrandTotal: payload.actualGrandTotal || fallback.actualGrandTotal,
     };
@@ -829,7 +902,9 @@ async function fetchLiveSummaryData() {
       source.incomeSheetName || "Summary รายรับ",
       source.incomeRange || "A:Z"
     ).catch(() => []);
-    const paidDetailPayload = normalizePaidDetailPayload(paidDetailMatrix);
+    const paidDetailPayload = await fetchPaidDetailPayloadForSource(source).catch(() =>
+      normalizePaidDetailPayload(paidDetailMatrix)
+    );
 
     return {
       ...normalizeSheetMatrix(summaryMatrix, fallback),
