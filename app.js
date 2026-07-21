@@ -1245,6 +1245,19 @@ function setupSourceControls() {
   const openButton = document.getElementById("source-modal-open-button");
   const closeButton = document.getElementById("source-modal-close-button");
 
+  if (
+    !applyButton ||
+    !sourceLinkInput ||
+    !sourceSheetNameInput ||
+    !sourceShareUrl ||
+    !copyUrlButton ||
+    !sourceModal ||
+    !openButton ||
+    !closeButton
+  ) {
+    return;
+  }
+
   function getPendingSourceConfig() {
     const spreadsheetUrl = sourceLinkInput.value.trim();
     const sheetName = sourceSheetNameInput.value.trim();
@@ -1799,9 +1812,11 @@ function bootstrap() {
 
   updateGlobalSource(sourceConfig);
 
-  refreshButton.addEventListener("click", () => {
-    refreshDashboard();
-  });
+  if (refreshButton) {
+    refreshButton.addEventListener("click", () => {
+      refreshDashboard();
+    });
+  }
 
   searchInput.addEventListener("input", (event) => {
     if (dashboardState) {
