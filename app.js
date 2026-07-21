@@ -527,15 +527,42 @@ function normalizeIncomeSummaryMatrix(matrix) {
     fee: 0,
     receivedWithFee: 0,
     channels: [],
+    bankSummary: {
+      latestDate: "",
+      accounts: [],
+      total: 0,
+    },
   };
   const channelRows = [];
+  const bankAccounts = [];
   let totalRow = null;
+  let inBankSection = false;
 
   (matrix || []).forEach((row) => {
     const firstCell = String(row[0] || "").trim();
 
+    if (firstCell === "ข้อมูลธนาคารล่าสุด") {
+      summary.bankSummary.latestDate = row[1] || "";
+    }
+
     if (firstCell === "รวมทั้งหมด") {
       totalRow = row;
+    } else if (firstCell === "สรุปยอดคงเหลือธนาคาร") {
+      inBankSection = true;
+    } else if (inBankSection && firstCell === "ธนาคาร / บัญชี") {
+      return;
+    } else if (inBankSection && firstCell) {
+      const bankBalance = parseAmount(row[3] || row[2] || row[1]);
+
+      if (firstCell.includes("รวม")) {
+        summary.bankSummary.total = bankBalance;
+        inBankSection = false;
+      } else {
+        bankAccounts.push({
+          account: firstCell,
+          balance: bankBalance,
+        });
+      }
     } else if (
       firstCell &&
       !["ข้อมูลธนาคารล่าสุด", "ช่องทาง", "ยอดขายรวม", "เงินเข้าจริงสุทธิ"].includes(firstCell) &&
@@ -591,6 +618,11 @@ function normalizeIncomeSummaryMatrix(matrix) {
   }
 
   summary.channels = channelRows;
+  summary.bankSummary.accounts = bankAccounts;
+
+  if (!summary.bankSummary.total) {
+    summary.bankSummary.total = bankAccounts.reduce((sum, item) => sum + item.balance, 0);
+  }
 
   return summary;
 }
@@ -1563,6 +1595,41 @@ function renderIncomeCompare(incomeSummary) {
   `;
 }
 
+function renderBankSummary(incomeSummary) {
+  const bankSummary = incomeSummary.bankSummary || { latestDate: "", accounts: [], total: 0 };
+  const latestDate = document.getElementById("bank-latest-date");
+  const totalBalance = document.getElementById("bank-total-balance");
+  const body = document.getElementById("bank-balance-body");
+
+  if (latestDate) {
+    latestDate.textContent = bankSummary.latestDate || "-";
+  }
+
+  if (totalBalance) {
+    totalBalance.textContent = formatCurrency(bankSummary.total || 0);
+  }
+
+  if (!body) {
+    return;
+  }
+
+  if (!bankSummary.accounts?.length) {
+    body.innerHTML = `<tr><td colspan="2" class="pending-empty-cell">ยังไม่มีข้อมูลธนาคาร</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = bankSummary.accounts
+    .map(
+      (item) => `
+        <tr>
+          <td>${escapeHtml(item.account)}</td>
+          <td>${formatCurrency(item.balance)}</td>
+        </tr>
+      `
+    )
+    .join("");
+}
+
 function renderIncomeDashboard(rows) {
   const kpiRoot = document.getElementById("income-kpi-grid");
   const topCard = document.getElementById("income-top-card");
@@ -1590,7 +1657,7 @@ function renderIncomeDashboard(rows) {
 
   if (kpiRoot) {
     const kpis = [
-      { label: "รายได้รวม", value: formatCurrency(salesMongo) },
+      { label: "ยอดขาย (Mongo)", value: formatCurrency(salesMongo) },
       { label: "รับจริงรวม + Fee", value: formatCurrency(receivedTotal) },
       { label: "Fee", value: formatCurrency(fee) },
       { label: "คงเหลือรับ", value: formatCurrency(pendingTotal) },
@@ -1612,7 +1679,7 @@ function renderIncomeDashboard(rows) {
     topCard.innerHTML = salesMongo || receivedTotal
       ? `
         <div class="top-category-card">
-          <div class="chip">รายได้รวม</div>
+          <div class="chip">ยอดขาย (Mongo)</div>
           <p class="top-category-amount">${formatCurrency(salesMongo)}</p>
           <div class="top-category-name">ยอดขาย (Mongo)</div>
           <p class="top-category-share">รับจริงรวม + Fee ${formatCurrency(receivedTotal)}</p>
@@ -1635,6 +1702,7 @@ function renderIncomeDashboard(rows) {
   }
 
   renderIncomeCompare(incomeSummary);
+  renderBankSummary(incomeSummary);
   renderIncomeRows(rows);
 }
 

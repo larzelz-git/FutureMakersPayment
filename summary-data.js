@@ -73,6 +73,11 @@ window.SUMMARY_DASHBOARD_DATA = {
     fee: 0,
     receivedWithFee: 0,
     channels: [],
+    bankSummary: {
+      latestDate: "",
+      accounts: [],
+      total: 0,
+    },
   },
   grandTotal: "47,834,806.65",
   actualGrandTotal: "16,627,820.07",
