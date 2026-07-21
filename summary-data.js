@@ -3,8 +3,10 @@ window.SUMMARY_DASHBOARD_DATA = {
     spreadsheetTitle: "สำเนาของ Costing 2026-07",
     spreadsheetUrl:
       "https://docs.google.com/spreadsheets/d/1fJ6qvATbXqbveDBlqjvVE9Lz5jsRwdW_pXxdYdKheiY/edit?gid=1848093504#gid=1848093504",
-    sheetName: "Summary",
+    sheetName: "Summary รายจ่าย",
     range: "A:G",
+    incomeSheetName: "Summary รายรับ",
+    incomeRange: "A:Z",
     pendingSheetName: "เตรียมจ่าย",
     pendingRange: "A:G",
     paidSheetName: "จ่ายแล้ว",
@@ -65,6 +67,12 @@ window.SUMMARY_DASHBOARD_DATA = {
   pendingRows: [],
   paidDetailHeader: ["หมวดหลัก", "หมวดย่อย", "Description", "Final Amount", "วันที่ชำระ"],
   paidDetailRows: [],
+  incomeSummary: {
+    salesMongo: 0,
+    receivedTotal: 0,
+    fee: 0,
+    receivedWithFee: 0,
+  },
   grandTotal: "47,834,806.65",
   actualGrandTotal: "16,627,820.07",
 };

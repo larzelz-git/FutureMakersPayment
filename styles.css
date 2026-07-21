@@ -685,6 +685,68 @@ h2 {
   background: rgba(45, 91, 79, 0.12);
 }
 
+.income-compare {
+  display: grid;
+  gap: 18px;
+}
+
+.income-compare-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.income-compare-summary div {
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid var(--line);
+}
+
+.income-compare-summary span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.income-compare-summary strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--forest);
+  font-size: 1.25rem;
+}
+
+.income-good {
+  color: var(--sage) !important;
+}
+
+.income-gap {
+  color: var(--terracotta) !important;
+}
+
+.income-bars {
+  display: grid;
+  gap: 16px;
+}
+
+.income-bar-row {
+  display: grid;
+  gap: 8px;
+}
+
+.income-bar-track {
+  height: 24px;
+}
+
+.income-bar-fill.sales {
+  background: linear-gradient(90deg, var(--forest), var(--sage));
+}
+
+.income-bar-fill.received {
+  background: linear-gradient(90deg, var(--gold), var(--terracotta));
+}
+
 .search-box {
   display: grid;
   gap: 8px;

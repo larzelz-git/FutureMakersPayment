@@ -22,9 +22,11 @@ const SOURCE_URL_KEYS = [
   "spreadsheetUrl",
   "spreadsheetId",
   "sheetName",
+  "incomeSheetName",
   "pendingSheetName",
   "paidSheetName",
   "range",
+  "incomeRange",
   "pendingRange",
   "paidDetailRange",
   "liveJsonUrl",
@@ -228,6 +230,7 @@ function prepareData(sourceData) {
     grandTotal,
     actualGrandTotal,
     pendingGrandTotal,
+    incomeSummary: sourceData.incomeSummary || normalizeIncomeSummaryMatrix([]),
     rows,
     pendingRows,
     paidDetails,
@@ -285,11 +288,25 @@ function getSourceConfig() {
 
   try {
     const saved = JSON.parse(window.localStorage.getItem(SOURCE_STORAGE_KEY) || "{}");
-    return {
+    const sourceConfig = {
       ...defaultSource,
       ...saved,
       ...urlSource,
     };
+
+    if (sourceConfig.sheetName === "Summary") {
+      sourceConfig.sheetName = "Summary รายจ่าย";
+    }
+
+    if (!sourceConfig.incomeSheetName) {
+      sourceConfig.incomeSheetName = "Summary รายรับ";
+    }
+
+    if (!sourceConfig.incomeRange) {
+      sourceConfig.incomeRange = "A:Z";
+    }
+
+    return sourceConfig;
   } catch (error) {
     return { ...defaultSource, ...urlSource };
   }
@@ -302,7 +319,9 @@ function saveLocalSourceConfig(sourceConfig) {
       spreadsheetUrl: sourceConfig.spreadsheetUrl,
       spreadsheetId: sourceConfig.spreadsheetId,
       sheetName: sourceConfig.sheetName,
+      incomeSheetName: sourceConfig.incomeSheetName,
       range: sourceConfig.range,
+      incomeRange: sourceConfig.incomeRange,
       pendingSheetName: sourceConfig.pendingSheetName,
       pendingRange: sourceConfig.pendingRange,
       paidSheetName: sourceConfig.paidSheetName,
@@ -386,10 +405,12 @@ async function saveSourceConfig(sourceConfig) {
   url.searchParams.set("action", "saveSource");
   url.searchParams.set("spreadsheetUrl", sourceConfig.spreadsheetUrl || "");
   url.searchParams.set("spreadsheetId", sourceConfig.spreadsheetId || "");
-  url.searchParams.set("sheetName", sourceConfig.sheetName || "Summary");
+  url.searchParams.set("sheetName", sourceConfig.sheetName || "Summary รายจ่าย");
+  url.searchParams.set("incomeSheetName", sourceConfig.incomeSheetName || "Summary รายรับ");
   url.searchParams.set("pendingSheetName", sourceConfig.pendingSheetName || "เตรียมจ่าย");
   url.searchParams.set("paidSheetName", sourceConfig.paidSheetName || "จ่ายแล้ว");
   url.searchParams.set("range", sourceConfig.range || "A:F");
+  url.searchParams.set("incomeRange", sourceConfig.incomeRange || "A:Z");
   url.searchParams.set("pendingRange", sourceConfig.pendingRange || "A:G");
   url.searchParams.set("paidDetailRange", sourceConfig.paidDetailRange || "G:V");
 
@@ -477,6 +498,65 @@ function normalizePendingMatrix(matrix) {
   return normalizeRowsWithCarryForward(dataMatrix).filter((row) => row[0] !== "Grand Total");
 }
 
+function findAmountNearLabel(row, labelIndex) {
+  for (let index = labelIndex + 1; index < row.length; index += 1) {
+    const amount = parseAmount(row[index]);
+
+    if (amount !== 0) {
+      return amount;
+    }
+  }
+
+  for (let index = 0; index < row.length; index += 1) {
+    if (index !== labelIndex) {
+      const amount = parseAmount(row[index]);
+
+      if (amount !== 0) {
+        return amount;
+      }
+    }
+  }
+
+  return 0;
+}
+
+function normalizeIncomeSummaryMatrix(matrix) {
+  const summary = {
+    salesMongo: 0,
+    receivedTotal: 0,
+    fee: 0,
+    receivedWithFee: 0,
+  };
+
+  (matrix || []).forEach((row) => {
+    row.forEach((cell, cellIndex) => {
+      const label = String(cell || "").replace(/\s+/g, " ").trim();
+      const normalizedLabel = label.toLowerCase();
+      const amount = findAmountNearLabel(row, cellIndex);
+
+      if (!amount) {
+        return;
+      }
+
+      if (label.includes("ยอดขาย") && normalizedLabel.includes("mongo")) {
+        summary.salesMongo = amount;
+      } else if (label.includes("รับจริงรวม") && label.includes("Fee")) {
+        summary.receivedWithFee = amount;
+      } else if (label.includes("รับจริงรวม") || label.includes("รับจริง")) {
+        summary.receivedTotal = amount;
+      } else if (label === "Fee" || label.includes("ค่า Fee") || label.includes("ค่าธรรมเนียม")) {
+        summary.fee = amount;
+      }
+    });
+  });
+
+  if (!summary.receivedWithFee) {
+    summary.receivedWithFee = summary.receivedTotal + summary.fee;
+  }
+
+  return summary;
+}
+
 function normalizePaidDetailPayload(matrix) {
   if (!matrix.length) {
     return {
@@ -558,11 +638,16 @@ async function fetchLiveSummaryDataViaScript() {
     source.paidSheetName || "จ่ายแล้ว",
     source.paidDetailRange || "G:V"
   ).catch(() => []);
+  const incomeMatrix = await fetchSheetMatrixViaScript(
+    source.incomeSheetName || "Summary รายรับ",
+    source.incomeRange || "A:Z"
+  ).catch(() => []);
   const paidDetailPayload = normalizePaidDetailPayload(paidDetailMatrix);
 
   return {
     ...normalizeSheetMatrix(summaryMatrix, fallback),
     pendingRows: normalizePendingMatrix(pendingMatrix),
+    incomeSummary: normalizeIncomeSummaryMatrix(incomeMatrix),
     ...paidDetailPayload,
   };
 }
@@ -621,6 +706,7 @@ async function fetchLiveSummaryData() {
       },
       rows: payload.rows || fallback.rows,
       pendingRows: payload.pendingRows || fallback.pendingRows || [],
+      incomeSummary: payload.incomeSummary || fallback.incomeSummary || normalizeIncomeSummaryMatrix([]),
       paidDetailHeader: payload.paidDetailHeader || fallback.paidDetailHeader || [],
       paidDetailRows: payload.paidDetailRows || fallback.paidDetailRows || [],
       grandTotal: payload.grandTotal || fallback.grandTotal,
@@ -643,11 +729,16 @@ async function fetchLiveSummaryData() {
       source.paidSheetName || "จ่ายแล้ว",
       source.paidDetailRange || "G:V"
     ).catch(() => []);
+    const incomeMatrix = await fetchSheetMatrix(
+      source.incomeSheetName || "Summary รายรับ",
+      source.incomeRange || "A:Z"
+    ).catch(() => []);
     const paidDetailPayload = normalizePaidDetailPayload(paidDetailMatrix);
 
     return {
       ...normalizeSheetMatrix(summaryMatrix, fallback),
       pendingRows: normalizePendingMatrix(pendingMatrix),
+      incomeSummary: normalizeIncomeSummaryMatrix(incomeMatrix),
       ...paidDetailPayload,
     };
   }
@@ -1061,9 +1152,11 @@ function setupSourceControls() {
     return {
       spreadsheetUrl,
       spreadsheetId,
-      sheetName: sheetName || "Summary",
+      sheetName: sheetName || "Summary รายจ่าย",
+      incomeSheetName: window.SUMMARY_DASHBOARD_DATA.source.incomeSheetName || "Summary รายรับ",
       pendingSheetName: window.SUMMARY_DASHBOARD_DATA.source.pendingSheetName || "เตรียมจ่าย",
       range: window.SUMMARY_DASHBOARD_DATA.source.range || "A:F",
+      incomeRange: window.SUMMARY_DASHBOARD_DATA.source.incomeRange || "A:Z",
       pendingRange: window.SUMMARY_DASHBOARD_DATA.source.pendingRange || "A:G",
       paidSheetName: window.SUMMARY_DASHBOARD_DATA.source.paidSheetName || "จ่ายแล้ว",
       paidDetailRange: window.SUMMARY_DASHBOARD_DATA.source.paidDetailRange || "G:V",
@@ -1325,13 +1418,84 @@ function renderIncomeRows(rows) {
   }
 }
 
+function getIncomeSummaryFromState() {
+  return dashboardState?.incomeSummary || window.SUMMARY_DASHBOARD_DATA.incomeSummary || normalizeIncomeSummaryMatrix([]);
+}
+
+function renderIncomeCompare(incomeSummary) {
+  const root = document.getElementById("income-compare");
+
+  if (!root) {
+    return;
+  }
+
+  const salesMongo = parseAmount(incomeSummary.salesMongo);
+  const receivedWithFee = parseAmount(incomeSummary.receivedWithFee);
+  const fee = parseAmount(incomeSummary.fee);
+  const maxValue = Math.max(salesMongo, receivedWithFee, 0);
+  const gap = salesMongo - receivedWithFee;
+  const rows = [
+    {
+      label: "ยอดขาย (Mongo)",
+      value: salesMongo,
+      width: maxValue > 0 ? (salesMongo / maxValue) * 100 : 0,
+      className: "sales",
+    },
+    {
+      label: "รับจริงรวม + Fee",
+      value: receivedWithFee,
+      width: maxValue > 0 ? (receivedWithFee / maxValue) * 100 : 0,
+      className: "received",
+    },
+  ];
+
+  root.innerHTML = `
+    <div class="income-compare-summary">
+      <div>
+        <span>ส่วนต่าง</span>
+        <strong class="${gap > 0 ? "income-gap" : "income-good"}">${formatCurrency(gap)}</strong>
+      </div>
+      <div>
+        <span>Fee</span>
+        <strong>${formatCurrency(fee)}</strong>
+      </div>
+      <div>
+        <span>% รับจริง</span>
+        <strong>${formatPercent(salesMongo > 0 ? (receivedWithFee / salesMongo) * 100 : 0)}</strong>
+      </div>
+    </div>
+    <div class="income-bars">
+      ${rows
+        .map(
+          (row) => `
+            <div class="income-bar-row">
+              <div class="category-label">
+                <span>${row.label}</span>
+                <span>${formatCurrency(row.value)}</span>
+              </div>
+              <div class="bar-track income-bar-track">
+                <div class="bar-fill income-bar-fill ${row.className}" style="width: ${Math.max(row.width, row.value > 0 ? 2 : 0)}%"></div>
+              </div>
+            </div>
+          `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
 function renderIncomeDashboard(rows) {
   const kpiRoot = document.getElementById("income-kpi-grid");
   const topCard = document.getElementById("income-top-card");
   const noteList = document.getElementById("income-note-list");
-  const total = rows.reduce((sum, row) => sum + row.amount, 0);
-  const receivedTotal = rows.filter(isIncomeReceived).reduce((sum, row) => sum + row.amount, 0);
-  const pendingTotal = rows.filter((row) => !isIncomeReceived(row)).reduce((sum, row) => sum + row.amount, 0);
+  const incomeSummary = getIncomeSummaryFromState();
+  const salesMongo = parseAmount(incomeSummary.salesMongo);
+  const receivedWithFee = parseAmount(incomeSummary.receivedWithFee);
+  const fee = parseAmount(incomeSummary.fee);
+  const manualTotal = rows.reduce((sum, row) => sum + row.amount, 0);
+  const total = salesMongo || manualTotal;
+  const receivedTotal = receivedWithFee || rows.filter(isIncomeReceived).reduce((sum, row) => sum + row.amount, 0);
+  const pendingTotal = Math.max(total - receivedTotal, 0);
   const sourceMap = new Map();
 
   rows.forEach((row) => {
@@ -1343,10 +1507,10 @@ function renderIncomeDashboard(rows) {
 
   if (kpiRoot) {
     const kpis = [
-      { label: "รายรับรวม", value: formatCurrency(total) },
-      { label: "รับแล้ว", value: formatCurrency(receivedTotal) },
-      { label: "ค้างรับ", value: formatCurrency(pendingTotal) },
-      { label: "จำนวนรายการ", value: `${rows.length} รายการ` },
+      { label: "ยอดขาย (Mongo)", value: formatCurrency(salesMongo) },
+      { label: "รับจริงรวม + Fee", value: formatCurrency(receivedTotal) },
+      { label: "Fee", value: formatCurrency(fee) },
+      { label: "คงเหลือรับ", value: formatCurrency(pendingTotal) },
     ];
 
     kpiRoot.innerHTML = kpis
@@ -1375,10 +1539,11 @@ function renderIncomeDashboard(rows) {
   }
 
   if (noteList) {
-    const notes = rows.length
+    const notes = salesMongo || receivedWithFee
       ? [
-          `มีรายรับทั้งหมด ${rows.length} รายการ รวม ${formatCurrency(total)}`,
-          `รับเงินจริงแล้ว ${formatCurrency(receivedTotal)} และค้างรับ ${formatCurrency(pendingTotal)}`,
+          `ยอดขาย (Mongo) คือ ${formatCurrency(salesMongo)}`,
+          `รับจริงรวม + Fee คือ ${formatCurrency(receivedTotal)} คิดเป็น ${formatPercent(salesMongo > 0 ? (receivedTotal / salesMongo) * 100 : 0)}`,
+          `ยังต่างจากยอดขายอยู่ ${formatCurrency(salesMongo - receivedTotal)}`,
           topSource ? `ช่องทางรายรับสูงสุดคือ ${topSource[0]} มูลค่า ${formatCurrency(topSource[1])}` : "ยังไม่พบช่องทางรายรับ",
         ]
       : ["เริ่มจากวางข้อมูลรายรับทางซ้าย แล้วกดบันทึกบนเครื่องนี้", "โครงนี้พร้อมต่อเข้าชีทรายรับจริงในขั้นถัดไป"];
@@ -1386,6 +1551,7 @@ function renderIncomeDashboard(rows) {
     noteList.innerHTML = notes.map((item) => `<li>${item}</li>`).join("");
   }
 
+  renderIncomeCompare(incomeSummary);
   renderIncomeRows(rows);
 }
 
@@ -1436,6 +1602,7 @@ function renderDashboard(sourceData) {
   renderInsights(data);
   renderDetailHead(data);
   renderTableRows(data);
+  renderIncomeDashboard(incomeRows);
 }
 
 async function refreshDashboard() {
