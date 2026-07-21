@@ -1628,6 +1628,27 @@ function getIncomeSummaryFromState() {
   return dashboardState?.incomeSummary || window.SUMMARY_DASHBOARD_DATA.incomeSummary || normalizeIncomeSummaryMatrix([]);
 }
 
+function getIncomeChannelSortIndex(channelName) {
+  const normalizedChannel = String(channelName || "").toLowerCase();
+  const channelOrder = ["manual", "shopee", "tiktok", "lazada"];
+  const matchedIndex = channelOrder.findIndex((name) => normalizedChannel.includes(name));
+
+  return matchedIndex === -1 ? channelOrder.length : matchedIndex;
+}
+
+function sortIncomeChannels(channels) {
+  return [...(channels || [])].sort((left, right) => {
+    const leftIndex = getIncomeChannelSortIndex(left.channel);
+    const rightIndex = getIncomeChannelSortIndex(right.channel);
+
+    if (leftIndex !== rightIndex) {
+      return leftIndex - rightIndex;
+    }
+
+    return String(left.channel || "").localeCompare(String(right.channel || ""));
+  });
+}
+
 function renderIncomeCompare(incomeSummary) {
   const root = document.getElementById("income-compare");
 
@@ -1638,7 +1659,7 @@ function renderIncomeCompare(incomeSummary) {
   const salesMongo = parseAmount(incomeSummary.salesMongo);
   const receivedWithFee = parseAmount(incomeSummary.receivedWithFee);
   const fee = parseAmount(incomeSummary.fee);
-  const channels = incomeSummary.channels || [];
+  const channels = sortIncomeChannels(incomeSummary.channels || []);
   const maxValue = Math.max(
     salesMongo,
     receivedWithFee,
@@ -1671,6 +1692,7 @@ function renderIncomeCompare(incomeSummary) {
                 const channelReceived = parseAmount(channel.netReceived);
                 const channelFee = parseAmount(channel.fee);
                 const channelReceivedWithFee = channelReceived + channelFee;
+                const channelFeePercent = channelSales > 0 ? (channelFee / channelSales) * 100 : 0;
                 const salesWidth = maxValue > 0 ? (channelSales / maxValue) * 100 : 0;
                 const receivedWidth = maxValue > 0 ? (channelReceived / maxValue) * 100 : 0;
                 const feeWidth = maxValue > 0 ? (channelFee / maxValue) * 100 : 0;
@@ -1678,7 +1700,7 @@ function renderIncomeCompare(incomeSummary) {
                 return `
                   <div class="income-channel-row">
                     <div class="category-label">
-                      <span>${escapeHtml(channel.channel)}</span>
+                      <span>${escapeHtml(channel.channel)} (${formatPercent(channelFeePercent)})</span>
                       <span>${formatPercent(channelSales > 0 ? (channelReceivedWithFee / channelSales) * 100 : 0)}</span>
                     </div>
                     <div class="income-channel-meta">
