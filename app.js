@@ -597,6 +597,7 @@ function normalizeIncomeSummaryMatrix(matrix) {
         channelRows.push({
           channel: firstCell,
           salesMongo,
+          feePercent: parseAmount(row[2]),
           fee,
           receivedWithFee,
           netReceived: parseAmount(row[7]),
@@ -1692,7 +1693,8 @@ function renderIncomeCompare(incomeSummary) {
                 const channelReceived = parseAmount(channel.netReceived);
                 const channelFee = parseAmount(channel.fee);
                 const channelReceivedWithFee = channelReceived + channelFee;
-                const channelFeePercent = channelSales > 0 ? (channelFee / channelSales) * 100 : 0;
+                const channelFeePercent =
+                  channel.feePercent != null ? parseAmount(channel.feePercent) : channelSales > 0 ? (channelFee / channelSales) * 100 : 0;
                 const salesWidth = maxValue > 0 ? (channelSales / maxValue) * 100 : 0;
                 const receivedWidth = maxValue > 0 ? (channelReceived / maxValue) * 100 : 0;
                 const feeWidth = maxValue > 0 ? (channelFee / maxValue) * 100 : 0;
