@@ -75,7 +75,7 @@ function parseAmount(rawValue) {
     return 0;
   }
 
-  return Number(String(rawValue).replaceAll(",", "")) || 0;
+  return Number(String(rawValue).replaceAll(",", "").replaceAll("%", "")) || 0;
 }
 
 function formatCurrency(value) {
