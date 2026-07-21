@@ -618,6 +618,22 @@ h2 {
   font-size: 1.05rem;
 }
 
+.last-updated-panel {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+}
+
+.last-updated-panel .section-label {
+  margin-bottom: 0;
+}
+
+.last-updated-panel strong {
+  color: var(--forest);
+  font-size: 1.05rem;
+}
+
 .top-category-card {
   padding: 22px;
 }

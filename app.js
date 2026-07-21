@@ -865,6 +865,7 @@ function renderSourceInfo(data) {
   const sourceLink = document.getElementById("source-link");
   const sourceSheetName = document.getElementById("source-sheet-name");
   const snapshotDate = document.getElementById("snapshot-date");
+  const expenseLastUpdated = document.getElementById("expense-last-updated");
   const sourceLinkInput = document.getElementById("source-link-input");
   const sourceSheetNameInput = document.getElementById("source-sheet-name-input");
   const sourceShareUrl = document.getElementById("source-share-url");
@@ -880,6 +881,10 @@ function renderSourceInfo(data) {
 
   if (snapshotDate) {
     snapshotDate.textContent = data.source.snapshotDate || "-";
+  }
+
+  if (expenseLastUpdated) {
+    expenseLastUpdated.textContent = data.source.snapshotDate || "-";
   }
 
   if (sourceLinkInput) {
