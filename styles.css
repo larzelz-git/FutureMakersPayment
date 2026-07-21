@@ -764,7 +764,11 @@ h2 {
 }
 
 .income-bar-fill.received {
-  background: linear-gradient(90deg, var(--gold), var(--terracotta));
+  background: linear-gradient(90deg, var(--gold), #d7833f);
+}
+
+.income-bar-fill.fee {
+  background: linear-gradient(90deg, #ef6b62, var(--danger));
 }
 
 .bank-latest {
