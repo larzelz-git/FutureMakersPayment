@@ -1554,20 +1554,23 @@ function renderIncomeCompare(incomeSummary) {
           ? channels
               .map((channel) => {
                 const channelSales = parseAmount(channel.salesMongo);
-                const channelReceived = parseAmount(channel.receivedWithFee);
+                const channelReceived = parseAmount(channel.netReceived);
+                const channelFee = parseAmount(channel.fee);
+                const channelReceivedWithFee = channelReceived + channelFee;
                 const salesWidth = maxValue > 0 ? (channelSales / maxValue) * 100 : 0;
                 const receivedWidth = maxValue > 0 ? (channelReceived / maxValue) * 100 : 0;
+                const feeWidth = maxValue > 0 ? (channelFee / maxValue) * 100 : 0;
 
                 return `
                   <div class="income-channel-row">
                     <div class="category-label">
                       <span>${escapeHtml(channel.channel)}</span>
-                      <span>${formatPercent(channelSales > 0 ? (channelReceived / channelSales) * 100 : 0)}</span>
+                      <span>${formatPercent(channelSales > 0 ? (channelReceivedWithFee / channelSales) * 100 : 0)}</span>
                     </div>
                     <div class="income-channel-meta">
                       <span>ยอดขาย (Mongo) ${formatCurrency(channelSales)}</span>
                       <span>รับจริงรวม ${formatCurrency(channelReceived)}</span>
-                      <span>Fee ${formatCurrency(channel.fee)}</span>
+                      <span>Fee ${formatCurrency(channelFee)}</span>
                     </div>
                     <div class="dual-bars">
                       <div class="bar-set">
@@ -1579,10 +1582,11 @@ function renderIncomeCompare(incomeSummary) {
                       </div>
                       <div class="bar-set">
                         <span class="bar-set-label">รับจริง</span>
-                        <div class="bar-track income-bar-track">
+                        <div class="bar-track income-bar-track stacked-bar">
                           <div class="bar-fill income-bar-fill received" style="width: ${Math.max(receivedWidth, channelReceived > 0 ? 2 : 0)}%"></div>
+                          <div class="bar-fill income-bar-fill fee" style="width: ${Math.max(feeWidth, channelFee > 0 ? 2 : 0)}%"></div>
                         </div>
-                        <span class="bar-set-value">${formatCurrency(channelReceived)}</span>
+                        <span class="bar-set-value">${formatCurrency(channelReceivedWithFee)}</span>
                       </div>
                     </div>
                   </div>
