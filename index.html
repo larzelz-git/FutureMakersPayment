@@ -16,30 +16,18 @@
     <div class="page-shell">
       <header class="hero">
         <div>
-          <p class="eyebrow">Summary Dashboard (V.20260721.0942)</p>
+          <p class="eyebrow">Summary Dashboard (V.20260721.0946)</p>
           <h1>สรุปรายจ่ายจากชีต `Summary รายจ่าย`</h1>
-        </div>
-        <div class="hero-meta">
-          <div class="meta-card">
-            <span>Data Status</span>
-            <strong id="live-status">กำลังตรวจสอบ...</strong>
-            <button id="refresh-button" class="refresh-button" type="button">รีเฟรชข้อมูล</button>
-          </div>
-          <div class="meta-card">
-            <span>Spreadsheet</span>
-            <strong>Summary รายจ่าย</strong>
-          </div>
-          <div class="meta-card">
-            <span>Snapshot</span>
-            <strong id="snapshot-date">-</strong>
-          </div>
         </div>
       </header>
 
       <main>
         <section class="source-compact">
           <button id="source-modal-open-button" class="source-open-button" type="button">จัดการ Data Source</button>
+          <button id="refresh-button" class="refresh-button compact-refresh-button" type="button">รีเฟรชข้อมูล</button>
           <span id="source-sheet-name" class="source-inline-label">-</span>
+          <span id="live-status" class="source-inline-label">กำลังตรวจสอบ...</span>
+          <span id="snapshot-date" class="source-inline-label" hidden>-</span>
         </section>
 
         <section class="main-tabs" role="tablist" aria-label="เลือกมุมมองรายจ่ายหรือรายรับ">
@@ -293,7 +281,7 @@
       </div>
     </div>
 
-    <script src="./summary-data.js?v=20260721.0942"></script>
-    <script src="./app.js?v=20260721.0942"></script>
+    <script src="./summary-data.js?v=20260721.0946"></script>
+    <script src="./app.js?v=20260721.0946"></script>
   </body>
 </html>
