@@ -72,6 +72,7 @@ window.SUMMARY_DASHBOARD_DATA = {
     receivedTotal: 0,
     fee: 0,
     receivedWithFee: 0,
+    channels: [],
   },
   grandTotal: "47,834,806.65",
   actualGrandTotal: "16,627,820.07",

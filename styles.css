@@ -730,9 +730,29 @@ h2 {
   gap: 16px;
 }
 
-.income-bar-row {
+.income-bar-row,
+.income-channel-row {
   display: grid;
   gap: 8px;
+}
+
+.income-channel-row {
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+
+.income-channel-row:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.income-channel-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .income-bar-track {

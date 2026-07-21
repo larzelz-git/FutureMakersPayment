@@ -526,9 +526,38 @@ function normalizeIncomeSummaryMatrix(matrix) {
     receivedTotal: 0,
     fee: 0,
     receivedWithFee: 0,
+    channels: [],
   };
+  const channelRows = [];
+  let totalRow = null;
 
   (matrix || []).forEach((row) => {
+    const firstCell = String(row[0] || "").trim();
+
+    if (firstCell === "รวมทั้งหมด") {
+      totalRow = row;
+    } else if (
+      firstCell &&
+      !["ข้อมูลธนาคารล่าสุด", "ช่องทาง", "ยอดขายรวม", "เงินเข้าจริงสุทธิ"].includes(firstCell) &&
+      !firstCell.startsWith("หมายเหตุ")
+    ) {
+      const salesMongo = parseAmount(row[1]);
+      const fee = parseAmount(row[3]);
+      const receivedWithFee = parseAmount(row[4]);
+
+      if (salesMongo > 0 || receivedWithFee > 0) {
+        channelRows.push({
+          channel: firstCell,
+          salesMongo,
+          fee,
+          receivedWithFee,
+          netReceived: parseAmount(row[8]),
+          gap: parseAmount(row[9]),
+          receivedPercent: parseAmount(row[10]),
+        });
+      }
+    }
+
     row.forEach((cell, cellIndex) => {
       const label = String(cell || "").replace(/\s+/g, " ").trim();
       const normalizedLabel = label.toLowerCase();
@@ -550,11 +579,37 @@ function normalizeIncomeSummaryMatrix(matrix) {
     });
   });
 
+  if (totalRow) {
+    summary.salesMongo = parseAmount(totalRow[1]) || summary.salesMongo;
+    summary.fee = parseAmount(totalRow[3]) || summary.fee;
+    summary.receivedWithFee = parseAmount(totalRow[4]) || summary.receivedWithFee;
+    summary.receivedTotal = parseAmount(totalRow[8]) || summary.receivedTotal;
+  }
+
   if (!summary.receivedWithFee) {
     summary.receivedWithFee = summary.receivedTotal + summary.fee;
   }
 
+  summary.channels = channelRows;
+
   return summary;
+}
+
+function hasIncomeSummaryValues(incomeSummary) {
+  return Boolean(
+    incomeSummary &&
+      (parseAmount(incomeSummary.salesMongo) ||
+        parseAmount(incomeSummary.receivedWithFee) ||
+        (incomeSummary.channels || []).length)
+  );
+}
+
+async function fetchIncomeSummaryForSource(source) {
+  const sheetName = source.incomeSheetName || "Summary รายรับ";
+  const range = source.incomeRange || "A:Z";
+  const matrix = await fetchSheetMatrixViaScript(sheetName, range).catch(() => fetchSheetMatrix(sheetName, range).catch(() => []));
+
+  return normalizeIncomeSummaryMatrix(matrix);
 }
 
 function normalizePaidDetailPayload(matrix) {
@@ -681,15 +736,13 @@ async function fetchLiveSummaryData() {
   if (liveJsonUrl) {
     const url = new URL(liveJsonUrl);
 
-    if (fallback.source.fromUrl) {
-      SOURCE_URL_KEYS.forEach((key) => {
-        const value = fallback.source[key];
+    SOURCE_URL_KEYS.forEach((key) => {
+      const value = fallback.source[key];
 
-        if (value && key !== "liveJsonUrl") {
-          url.searchParams.set(key, value);
-        }
-      });
-    }
+      if (value && key !== "liveJsonUrl") {
+        url.searchParams.set(key, value);
+      }
+    });
 
     const response = await fetch(url.toString(), { cache: "no-store" });
     if (!response.ok) {
@@ -697,16 +750,23 @@ async function fetchLiveSummaryData() {
     }
 
     const payload = await response.json();
+    const mergedSource = {
+      ...fallback.source,
+      ...payload.source,
+      snapshotDate: payload.source?.snapshotDate || fallback.source.snapshotDate,
+    };
+    let incomeSummary = payload.incomeSummary || fallback.incomeSummary || normalizeIncomeSummaryMatrix([]);
+
+    if (!hasIncomeSummaryValues(incomeSummary)) {
+      incomeSummary = await fetchIncomeSummaryForSource(mergedSource);
+    }
+
     return {
       ...fallback,
-      source: {
-        ...fallback.source,
-        ...payload.source,
-        snapshotDate: payload.source?.snapshotDate || fallback.source.snapshotDate,
-      },
+      source: mergedSource,
       rows: payload.rows || fallback.rows,
       pendingRows: payload.pendingRows || fallback.pendingRows || [],
-      incomeSummary: payload.incomeSummary || fallback.incomeSummary || normalizeIncomeSummaryMatrix([]),
+      incomeSummary,
       paidDetailHeader: payload.paidDetailHeader || fallback.paidDetailHeader || [],
       paidDetailRows: payload.paidDetailRows || fallback.paidDetailRows || [],
       grandTotal: payload.grandTotal || fallback.grandTotal,
@@ -1432,22 +1492,14 @@ function renderIncomeCompare(incomeSummary) {
   const salesMongo = parseAmount(incomeSummary.salesMongo);
   const receivedWithFee = parseAmount(incomeSummary.receivedWithFee);
   const fee = parseAmount(incomeSummary.fee);
-  const maxValue = Math.max(salesMongo, receivedWithFee, 0);
+  const channels = incomeSummary.channels || [];
+  const maxValue = Math.max(
+    salesMongo,
+    receivedWithFee,
+    ...channels.map((item) => Math.max(parseAmount(item.salesMongo), parseAmount(item.receivedWithFee))),
+    0
+  );
   const gap = salesMongo - receivedWithFee;
-  const rows = [
-    {
-      label: "ยอดขาย (Mongo)",
-      value: salesMongo,
-      width: maxValue > 0 ? (salesMongo / maxValue) * 100 : 0,
-      className: "sales",
-    },
-    {
-      label: "รับจริงรวม + Fee",
-      value: receivedWithFee,
-      width: maxValue > 0 ? (receivedWithFee / maxValue) * 100 : 0,
-      className: "received",
-    },
-  ];
 
   root.innerHTML = `
     <div class="income-compare-summary">
@@ -1465,21 +1517,48 @@ function renderIncomeCompare(incomeSummary) {
       </div>
     </div>
     <div class="income-bars">
-      ${rows
-        .map(
-          (row) => `
-            <div class="income-bar-row">
-              <div class="category-label">
-                <span>${row.label}</span>
-                <span>${formatCurrency(row.value)}</span>
-              </div>
-              <div class="bar-track income-bar-track">
-                <div class="bar-fill income-bar-fill ${row.className}" style="width: ${Math.max(row.width, row.value > 0 ? 2 : 0)}%"></div>
-              </div>
-            </div>
-          `
-        )
-        .join("")}
+      ${
+        channels.length
+          ? channels
+              .map((channel) => {
+                const channelSales = parseAmount(channel.salesMongo);
+                const channelReceived = parseAmount(channel.receivedWithFee);
+                const salesWidth = maxValue > 0 ? (channelSales / maxValue) * 100 : 0;
+                const receivedWidth = maxValue > 0 ? (channelReceived / maxValue) * 100 : 0;
+
+                return `
+                  <div class="income-channel-row">
+                    <div class="category-label">
+                      <span>${escapeHtml(channel.channel)}</span>
+                      <span>${formatPercent(channelSales > 0 ? (channelReceived / channelSales) * 100 : 0)}</span>
+                    </div>
+                    <div class="income-channel-meta">
+                      <span>ยอดขาย (Mongo) ${formatCurrency(channelSales)}</span>
+                      <span>รับจริงรวม + Fee ${formatCurrency(channelReceived)}</span>
+                      <span>Fee ${formatCurrency(channel.fee)}</span>
+                    </div>
+                    <div class="dual-bars">
+                      <div class="bar-set">
+                        <span class="bar-set-label">Mongo</span>
+                        <div class="bar-track income-bar-track">
+                          <div class="bar-fill income-bar-fill sales" style="width: ${Math.max(salesWidth, channelSales > 0 ? 2 : 0)}%"></div>
+                        </div>
+                        <span class="bar-set-value">${formatCurrency(channelSales)}</span>
+                      </div>
+                      <div class="bar-set">
+                        <span class="bar-set-label">รับจริง</span>
+                        <div class="bar-track income-bar-track">
+                          <div class="bar-fill income-bar-fill received" style="width: ${Math.max(receivedWidth, channelReceived > 0 ? 2 : 0)}%"></div>
+                        </div>
+                        <span class="bar-set-value">${formatCurrency(channelReceived)}</span>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              })
+              .join("")
+          : `<div class="pending-empty-cell">ยังไม่พบข้อมูลรายช่องทางจาก Summary รายรับ</div>`
+      }
     </div>
   `;
 }
@@ -1492,6 +1571,7 @@ function renderIncomeDashboard(rows) {
   const salesMongo = parseAmount(incomeSummary.salesMongo);
   const receivedWithFee = parseAmount(incomeSummary.receivedWithFee);
   const fee = parseAmount(incomeSummary.fee);
+  const channels = incomeSummary.channels || [];
   const manualTotal = rows.reduce((sum, row) => sum + row.amount, 0);
   const total = salesMongo || manualTotal;
   const receivedTotal = receivedWithFee || rows.filter(isIncomeReceived).reduce((sum, row) => sum + row.amount, 0);
@@ -1502,12 +1582,15 @@ function renderIncomeDashboard(rows) {
     const sourceName = row.source || "ไม่ระบุช่องทาง";
     sourceMap.set(sourceName, (sourceMap.get(sourceName) || 0) + row.amount);
   });
+  channels.forEach((row) => {
+    sourceMap.set(row.channel, parseAmount(row.salesMongo));
+  });
 
   const topSource = Array.from(sourceMap.entries()).sort((left, right) => right[1] - left[1])[0];
 
   if (kpiRoot) {
     const kpis = [
-      { label: "ยอดขาย (Mongo)", value: formatCurrency(salesMongo) },
+      { label: "รายได้รวม", value: formatCurrency(salesMongo) },
       { label: "รับจริงรวม + Fee", value: formatCurrency(receivedTotal) },
       { label: "Fee", value: formatCurrency(fee) },
       { label: "คงเหลือรับ", value: formatCurrency(pendingTotal) },
@@ -1526,13 +1609,13 @@ function renderIncomeDashboard(rows) {
   }
 
   if (topCard) {
-    topCard.innerHTML = topSource
+    topCard.innerHTML = salesMongo || receivedTotal
       ? `
         <div class="top-category-card">
-          <div class="chip">แหล่งรายรับหลัก</div>
-          <p class="top-category-amount">${formatCurrency(topSource[1])}</p>
-          <div class="top-category-name">${escapeHtml(topSource[0])}</div>
-          <p class="top-category-share">คิดเป็น ${formatPercent(total > 0 ? (topSource[1] / total) * 100 : 0)} ของรายรับรวม</p>
+          <div class="chip">รายได้รวม</div>
+          <p class="top-category-amount">${formatCurrency(salesMongo)}</p>
+          <div class="top-category-name">ยอดขาย (Mongo)</div>
+          <p class="top-category-share">รับจริงรวม + Fee ${formatCurrency(receivedTotal)}</p>
         </div>
       `
       : "<p class=\"muted\">ยังไม่มีข้อมูลรายรับ</p>";
