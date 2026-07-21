@@ -105,11 +105,11 @@ function getDefaultSourceConfig() {
     sheetName: 'Summary รายจ่าย',
     incomeSheetName: 'Summary รายรับ',
     pendingSheetName: 'เตรียมจ่าย',
-    paidSheetName: 'จ่ายแล้ว',
+    paidSheetName: 'จ่ายแล้ว_Unfiltered',
     range: 'A:F',
     incomeRange: 'A:Z',
     pendingRange: 'A:G',
-    paidDetailRange: 'G:V'
+    paidDetailRange: 'A:P'
   };
 }
 

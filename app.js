@@ -18,6 +18,8 @@ let detailTableState = {
 };
 const SOURCE_STORAGE_KEY = "summary-dashboard-source-config";
 const INCOME_STORAGE_KEY = "summary-dashboard-income-rows";
+const DEFAULT_PAID_DETAIL_SHEET_NAME = "จ่ายแล้ว_Unfiltered";
+const DEFAULT_PAID_DETAIL_RANGE = "A:P";
 const SOURCE_URL_KEYS = [
   "spreadsheetUrl",
   "spreadsheetId",
@@ -40,6 +42,33 @@ const DETAIL_COLUMNS = [
 ];
 
 let incomeRows = [];
+
+function normalizeSourceConfig(sourceConfig) {
+  const normalizedSource = { ...sourceConfig };
+
+  if (normalizedSource.sheetName === "Summary") {
+    normalizedSource.sheetName = "Summary รายจ่าย";
+  }
+
+  if (!normalizedSource.incomeSheetName) {
+    normalizedSource.incomeSheetName = "Summary รายรับ";
+  }
+
+  if (!normalizedSource.incomeRange) {
+    normalizedSource.incomeRange = "A:Z";
+  }
+
+  if (
+    !normalizedSource.paidSheetName ||
+    normalizedSource.paidSheetName === "จ่ายแล้ว" ||
+    normalizedSource.paidDetailRange === "G:V"
+  ) {
+    normalizedSource.paidSheetName = DEFAULT_PAID_DETAIL_SHEET_NAME;
+    normalizedSource.paidDetailRange = DEFAULT_PAID_DETAIL_RANGE;
+  }
+
+  return normalizedSource;
+}
 
 function parseAmount(rawValue) {
   if (rawValue == null || rawValue === "-") {
@@ -294,21 +323,9 @@ function getSourceConfig() {
       ...urlSource,
     };
 
-    if (sourceConfig.sheetName === "Summary") {
-      sourceConfig.sheetName = "Summary รายจ่าย";
-    }
-
-    if (!sourceConfig.incomeSheetName) {
-      sourceConfig.incomeSheetName = "Summary รายรับ";
-    }
-
-    if (!sourceConfig.incomeRange) {
-      sourceConfig.incomeRange = "A:Z";
-    }
-
-    return sourceConfig;
+    return normalizeSourceConfig(sourceConfig);
   } catch (error) {
-    return { ...defaultSource, ...urlSource };
+    return normalizeSourceConfig({ ...defaultSource, ...urlSource });
   }
 }
 
@@ -408,11 +425,11 @@ async function saveSourceConfig(sourceConfig) {
   url.searchParams.set("sheetName", sourceConfig.sheetName || "Summary รายจ่าย");
   url.searchParams.set("incomeSheetName", sourceConfig.incomeSheetName || "Summary รายรับ");
   url.searchParams.set("pendingSheetName", sourceConfig.pendingSheetName || "เตรียมจ่าย");
-  url.searchParams.set("paidSheetName", sourceConfig.paidSheetName || "จ่ายแล้ว");
+  url.searchParams.set("paidSheetName", sourceConfig.paidSheetName || DEFAULT_PAID_DETAIL_SHEET_NAME);
   url.searchParams.set("range", sourceConfig.range || "A:F");
   url.searchParams.set("incomeRange", sourceConfig.incomeRange || "A:Z");
   url.searchParams.set("pendingRange", sourceConfig.pendingRange || "A:G");
-  url.searchParams.set("paidDetailRange", sourceConfig.paidDetailRange || "G:V");
+  url.searchParams.set("paidDetailRange", sourceConfig.paidDetailRange || DEFAULT_PAID_DETAIL_RANGE);
 
   const payload = await requestJsonp(url);
 
@@ -730,8 +747,8 @@ async function fetchSheetMatrixCsv(sheetName, range, sourceOverride = null) {
 }
 
 async function fetchPaidDetailPayloadForSource(source) {
-  const sheetName = source.paidSheetName || "จ่ายแล้ว";
-  const range = source.paidDetailRange || "G:V";
+  const sheetName = source.paidSheetName || DEFAULT_PAID_DETAIL_SHEET_NAME;
+  const range = source.paidDetailRange || DEFAULT_PAID_DETAIL_RANGE;
   const matrix = await fetchSheetMatrixCsv(sheetName, range, source);
 
   return normalizePaidDetailPayload(matrix);
@@ -793,8 +810,8 @@ async function fetchLiveSummaryDataViaScript() {
     source.pendingRange || "A:G"
   ).catch(() => []);
   const paidDetailMatrix = await fetchSheetMatrixViaScript(
-    source.paidSheetName || "จ่ายแล้ว",
-    source.paidDetailRange || "G:V"
+    source.paidSheetName || DEFAULT_PAID_DETAIL_SHEET_NAME,
+    source.paidDetailRange || DEFAULT_PAID_DETAIL_RANGE
   ).catch(() => []);
   const incomeMatrix = await fetchSheetMatrixViaScript(
     source.incomeSheetName || "Summary รายรับ",
@@ -895,8 +912,8 @@ async function fetchLiveSummaryData() {
       source.pendingRange || "A:G"
     ).catch(() => []);
     const paidDetailMatrix = await fetchSheetMatrix(
-      source.paidSheetName || "จ่ายแล้ว",
-      source.paidDetailRange || "G:V"
+      source.paidSheetName || DEFAULT_PAID_DETAIL_SHEET_NAME,
+      source.paidDetailRange || DEFAULT_PAID_DETAIL_RANGE
     ).catch(() => []);
     const incomeMatrix = await fetchSheetMatrix(
       source.incomeSheetName || "Summary รายรับ",
@@ -1347,8 +1364,8 @@ function setupSourceControls() {
       range: window.SUMMARY_DASHBOARD_DATA.source.range || "A:F",
       incomeRange: window.SUMMARY_DASHBOARD_DATA.source.incomeRange || "A:Z",
       pendingRange: window.SUMMARY_DASHBOARD_DATA.source.pendingRange || "A:G",
-      paidSheetName: window.SUMMARY_DASHBOARD_DATA.source.paidSheetName || "จ่ายแล้ว",
-      paidDetailRange: window.SUMMARY_DASHBOARD_DATA.source.paidDetailRange || "G:V",
+      paidSheetName: window.SUMMARY_DASHBOARD_DATA.source.paidSheetName || DEFAULT_PAID_DETAIL_SHEET_NAME,
+      paidDetailRange: window.SUMMARY_DASHBOARD_DATA.source.paidDetailRange || DEFAULT_PAID_DETAIL_RANGE,
       liveJsonUrl: window.SUMMARY_DASHBOARD_DATA.source.liveJsonUrl || "",
     };
   }
