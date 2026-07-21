@@ -1664,7 +1664,11 @@ function renderIncomeCompare(incomeSummary) {
   const maxValue = Math.max(
     salesMongo,
     receivedWithFee,
-    ...channels.map((item) => Math.max(parseAmount(item.salesMongo), parseAmount(item.receivedWithFee))),
+    ...channels.map((item) => {
+      const channelReceived = parseAmount(item.netReceived);
+      const channelFee = parseAmount(item.fee);
+      return Math.max(parseAmount(item.salesMongo), channelReceived + channelFee);
+    }),
     0
   );
   const gap = salesMongo - receivedWithFee;
@@ -1714,15 +1718,15 @@ function renderIncomeCompare(incomeSummary) {
                       <div class="bar-set">
                         <span class="bar-set-label">Mongo</span>
                         <div class="bar-track income-bar-track">
-                          <div class="bar-fill income-bar-fill sales" style="width: ${Math.max(salesWidth, channelSales > 0 ? 2 : 0)}%"></div>
+                          <div class="bar-fill income-bar-fill sales" style="width: ${salesWidth}%"></div>
                         </div>
                         <span class="bar-set-value">${formatCurrency(channelSales)}</span>
                       </div>
                       <div class="bar-set">
                         <span class="bar-set-label">รับจริง</span>
                         <div class="bar-track income-bar-track stacked-bar">
-                          <div class="bar-fill income-bar-fill received" style="width: ${Math.max(receivedWidth, channelReceived > 0 ? 2 : 0)}%"></div>
-                          <div class="bar-fill income-bar-fill fee" style="width: ${Math.max(feeWidth, channelFee > 0 ? 2 : 0)}%"></div>
+                          <div class="bar-fill income-bar-fill received" style="width: ${receivedWidth}%"></div>
+                          <div class="bar-fill income-bar-fill fee" style="width: ${feeWidth}%"></div>
                         </div>
                         <span class="bar-set-value">${formatCurrency(channelReceivedWithFee)}</span>
                       </div>
