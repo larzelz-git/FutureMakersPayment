@@ -194,6 +194,38 @@ h2 {
   font-weight: 700;
 }
 
+.main-tabs {
+  display: inline-flex;
+  gap: 8px;
+  padding: 8px;
+  margin-bottom: 20px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 12px 36px rgba(72, 53, 25, 0.08);
+}
+
+.main-tab {
+  min-width: 138px;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.main-tab.is-active {
+  background: var(--ink);
+  color: #fff;
+}
+
+.view-panel[hidden] {
+  display: none;
+}
+
 .source-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -436,11 +468,25 @@ h2 {
   color: #fff;
 }
 
+.income-table th {
+  background: var(--forest);
+}
+
 .pending-table td:nth-child(3),
 .pending-table td:nth-child(4),
 .pending-table th:nth-child(3),
 .pending-table th:nth-child(4) {
   text-align: right;
+}
+
+.income-table td:nth-child(4),
+.income-table th:nth-child(4) {
+  text-align: right;
+}
+
+.income-table td:nth-child(3),
+.income-table th:nth-child(3) {
+  text-align: left;
 }
 
 .pending-empty-cell {
@@ -559,6 +605,10 @@ h2 {
   background: radial-gradient(circle, rgba(217, 157, 61, 0.28), transparent 68%);
 }
 
+.income-spotlight::after {
+  background: radial-gradient(circle, rgba(141, 166, 127, 0.32), transparent 68%);
+}
+
 .side-stack {
   display: grid;
   gap: 18px;
@@ -616,6 +666,23 @@ h2 {
 .top-category-share {
   color: var(--forest);
   font-weight: 700;
+}
+
+.income-kpi-grid {
+  margin-top: 0;
+}
+
+.income-kpi-card {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.78), rgba(218, 232, 212, 0.9));
+}
+
+.income-shell {
+  border-style: solid;
+  background: rgba(255, 255, 255, 0.48);
+}
+
+.income-status {
+  background: rgba(45, 91, 79, 0.12);
 }
 
 .search-box {
