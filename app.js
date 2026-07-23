@@ -935,9 +935,7 @@ async function fetchLiveSummaryData() {
 
 function renderKpis(data) {
   const root = document.getElementById("kpi-grid");
-  const hiddenExpenseCategory = data.categories.find((item) => item.category === "ค่าใช้จ่ายแฝง");
-  const hiddenExpenseBudget = hiddenExpenseCategory ? hiddenExpenseCategory.budget : 0;
-  const remainingBudget = data.grandTotal - data.actualGrandTotal - hiddenExpenseBudget;
+  const remainingBudget = data.grandTotal - data.actualGrandTotal - data.pendingGrandTotal;
 
   const kpis = [
     { label: "งบรวม", value: formatCurrency(data.grandTotal) },
