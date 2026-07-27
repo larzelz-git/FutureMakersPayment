@@ -432,10 +432,16 @@ h2 {
 }
 
 .pending-table td:nth-child(3),
-.pending-table td:nth-child(4),
-.pending-table th:nth-child(3),
-.pending-table th:nth-child(4) {
+.pending-table th:nth-child(3) {
   text-align: right;
+}
+
+.pending-table tbody tr.pending-budgeted td {
+  background: rgba(113, 164, 112, 0.16);
+}
+
+.pending-table tbody tr.pending-unbudgeted td {
+  background: rgba(220, 91, 84, 0.16);
 }
 
 .income-table td:nth-child(4),

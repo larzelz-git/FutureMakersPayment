@@ -27,9 +27,11 @@ const SOURCE_URL_KEYS = [
   "incomeSheetName",
   "pendingSheetName",
   "paidSheetName",
+  "budgetSheetName",
   "range",
   "incomeRange",
   "pendingRange",
+  "budgetRange",
   "paidDetailRange",
   "liveJsonUrl",
 ];
@@ -341,6 +343,8 @@ function saveLocalSourceConfig(sourceConfig) {
       incomeRange: sourceConfig.incomeRange,
       pendingSheetName: sourceConfig.pendingSheetName,
       pendingRange: sourceConfig.pendingRange,
+      budgetSheetName: sourceConfig.budgetSheetName,
+      budgetRange: sourceConfig.budgetRange,
       paidSheetName: sourceConfig.paidSheetName,
       paidDetailRange: sourceConfig.paidDetailRange,
       liveJsonUrl: sourceConfig.liveJsonUrl,
@@ -425,10 +429,12 @@ async function saveSourceConfig(sourceConfig) {
   url.searchParams.set("sheetName", sourceConfig.sheetName || "Summary รายจ่าย");
   url.searchParams.set("incomeSheetName", sourceConfig.incomeSheetName || "Summary รายรับ");
   url.searchParams.set("pendingSheetName", sourceConfig.pendingSheetName || "เตรียมจ่าย");
+  url.searchParams.set("budgetSheetName", sourceConfig.budgetSheetName || "Budget");
   url.searchParams.set("paidSheetName", sourceConfig.paidSheetName || DEFAULT_PAID_DETAIL_SHEET_NAME);
   url.searchParams.set("range", sourceConfig.range || "A:F");
   url.searchParams.set("incomeRange", sourceConfig.incomeRange || "A:Z");
   url.searchParams.set("pendingRange", sourceConfig.pendingRange || "A:G");
+  url.searchParams.set("budgetRange", sourceConfig.budgetRange || "A:Z");
   url.searchParams.set("paidDetailRange", sourceConfig.paidDetailRange || DEFAULT_PAID_DETAIL_RANGE);
 
   const payload = await requestJsonp(url);
@@ -522,9 +528,27 @@ function normalizePendingDisplayRows(matrix) {
       subcategory: row[1] || "",
       subcategoryActual: parseAmount(row[2]),
       description: row[3] || "",
+      prPo: row[4] || "",
       amount: pickPendingAmount(row),
     }))
     .filter((row) => row.category || row.subcategory || row.description);
+}
+
+function normalizeBudgetPrPoSet(matrix) {
+  if (!matrix.length) {
+    return new Set();
+  }
+
+  const hasHeaderRow = matrix[0]?.some((value) => String(value).trim().toUpperCase() === "PR/PO");
+  const dataMatrix = hasHeaderRow ? matrix.slice(1) : matrix;
+
+  return new Set(dataMatrix
+    .map((row) => String(row[0] || "").trim().toUpperCase())
+    .filter(Boolean));
+}
+
+function normalizePrPo(value) {
+  return String(value || "").trim().toUpperCase();
 }
 
 function findAmountNearLabel(row, labelIndex) {
@@ -822,6 +846,10 @@ async function fetchLiveSummaryDataViaScript() {
     source.pendingSheetName || "เตรียมจ่าย",
     source.pendingRange || "A:G"
   ).catch(() => []);
+  const budgetMatrix = await fetchSheetMatrixViaScript(
+    source.budgetSheetName || "Budget",
+    source.budgetRange || "A:Z"
+  ).catch(() => []);
   const paidDetailMatrix = await fetchSheetMatrixViaScript(
     source.paidSheetName || DEFAULT_PAID_DETAIL_SHEET_NAME,
     source.paidDetailRange || DEFAULT_PAID_DETAIL_RANGE
@@ -837,6 +865,7 @@ async function fetchLiveSummaryDataViaScript() {
   return {
     ...normalizeSheetMatrix(summaryMatrix, fallback),
     pendingRows: normalizePendingMatrix(pendingMatrix),
+    budgetPrPoSet: normalizeBudgetPrPoSet(budgetMatrix),
     incomeSummary: normalizeIncomeSummaryMatrix(incomeMatrix),
     ...paidDetailPayload,
   };
@@ -906,6 +935,9 @@ async function fetchLiveSummaryData() {
       source: mergedSource,
       rows: payload.rows || fallback.rows,
       pendingRows: payload.pendingRows || fallback.pendingRows || [],
+      budgetPrPoSet: payload.budgetPrPoSet
+        ? new Set(payload.budgetPrPoSet)
+        : normalizeBudgetPrPoSet(payload.budgetRows || []),
       incomeSummary,
       ...paidDetailPayload,
       grandTotal: payload.grandTotal || fallback.grandTotal,
@@ -924,6 +956,10 @@ async function fetchLiveSummaryData() {
       source.pendingSheetName || "เตรียมจ่าย",
       source.pendingRange || "A:G"
     ).catch(() => []);
+    const budgetMatrix = await fetchSheetMatrix(
+      source.budgetSheetName || "Budget",
+      source.budgetRange || "A:Z"
+    ).catch(() => []);
     const paidDetailMatrix = await fetchSheetMatrix(
       source.paidSheetName || DEFAULT_PAID_DETAIL_SHEET_NAME,
       source.paidDetailRange || DEFAULT_PAID_DETAIL_RANGE
@@ -939,6 +975,7 @@ async function fetchLiveSummaryData() {
     return {
       ...normalizeSheetMatrix(summaryMatrix, fallback),
       pendingRows: normalizePendingMatrix(pendingMatrix),
+      budgetPrPoSet: normalizeBudgetPrPoSet(budgetMatrix),
       incomeSummary: normalizeIncomeSummaryMatrix(incomeMatrix),
       ...paidDetailPayload,
     };
@@ -1372,9 +1409,11 @@ function setupSourceControls() {
       sheetName: sheetName || "Summary รายจ่าย",
       incomeSheetName: window.SUMMARY_DASHBOARD_DATA.source.incomeSheetName || "Summary รายรับ",
       pendingSheetName: window.SUMMARY_DASHBOARD_DATA.source.pendingSheetName || "เตรียมจ่าย",
+      budgetSheetName: window.SUMMARY_DASHBOARD_DATA.source.budgetSheetName || "Budget",
       range: window.SUMMARY_DASHBOARD_DATA.source.range || "A:F",
       incomeRange: window.SUMMARY_DASHBOARD_DATA.source.incomeRange || "A:Z",
       pendingRange: window.SUMMARY_DASHBOARD_DATA.source.pendingRange || "A:G",
+      budgetRange: window.SUMMARY_DASHBOARD_DATA.source.budgetRange || "A:Z",
       paidSheetName: window.SUMMARY_DASHBOARD_DATA.source.paidSheetName || DEFAULT_PAID_DETAIL_SHEET_NAME,
       paidDetailRange: window.SUMMARY_DASHBOARD_DATA.source.paidDetailRange || DEFAULT_PAID_DETAIL_RANGE,
       liveJsonUrl: window.SUMMARY_DASHBOARD_DATA.source.liveJsonUrl || "",
@@ -1496,11 +1535,12 @@ function parsePendingPaste(text) {
       subcategory: row[1] || "",
       subcategoryActual: parseAmount(row[2]),
       description: row[3] || "",
+      prPo: row[4] || "",
     }))
     .filter((row) => row.category || row.subcategory || row.description);
 }
 
-function renderPendingPreview(rows) {
+function renderPendingPreview(rows, budgetPrPoSet = new Set()) {
   const body = document.getElementById("pending-preview-body");
   const summary = document.getElementById("pending-preview-summary");
 
@@ -1514,7 +1554,7 @@ function renderPendingPreview(rows) {
   if (!rows.length) {
     body.innerHTML = `
       <tr>
-        <td colspan="4" class="pending-empty-cell">ยังไม่มีข้อมูลเตรียมจ่าย</td>
+        <td colspan="5" class="pending-empty-cell">ยังไม่มีข้อมูลเตรียมจ่าย</td>
       </tr>
     `;
     return;
@@ -1522,14 +1562,20 @@ function renderPendingPreview(rows) {
 
   body.innerHTML = rows
     .map(
-      (row) => `
-        <tr>
+      (row) => {
+        const isBudgeted = normalizePrPo(row.prPo) && budgetPrPoSet.has(normalizePrPo(row.prPo));
+        const budgetClass = isBudgeted ? "pending-budgeted" : "pending-unbudgeted";
+
+        return `
+        <tr class="${budgetClass}">
           <td>${escapeHtml(row.category)}</td>
           <td>${escapeHtml(row.subcategory)}</td>
           <td>${formatCurrency(row.subcategoryActual)}</td>
           <td>${escapeHtml(row.description)}</td>
+          <td>${escapeHtml(row.prPo)}</td>
         </tr>
-      `
+      `;
+      }
     )
     .join("");
 }
@@ -1912,7 +1958,10 @@ function renderDashboard(sourceData) {
   renderInsights(data);
   renderDetailHead(data);
   renderTableRows(data);
-  renderPendingPreview(normalizePendingDisplayRows(sourceData.pendingRows || []));
+  renderPendingPreview(
+    normalizePendingDisplayRows(sourceData.pendingRows || []),
+    sourceData.budgetPrPoSet || new Set()
+  );
   renderIncomeDashboard(incomeRows);
 }
 
