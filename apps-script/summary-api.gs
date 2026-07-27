@@ -11,19 +11,23 @@ function doGet(event) {
   var sheetName = sourceConfig.sheetName;
   var incomeSheetName = sourceConfig.incomeSheetName;
   var pendingSheetName = sourceConfig.pendingSheetName;
+  var budgetSheetName = sourceConfig.budgetSheetName;
   var paidSheetName = sourceConfig.paidSheetName;
   var rangeA1 = sourceConfig.range;
   var incomeRangeA1 = sourceConfig.incomeRange;
   var pendingRangeA1 = sourceConfig.pendingRange;
+  var budgetRangeA1 = sourceConfig.budgetRange;
   var paidDetailRangeA1 = sourceConfig.paidDetailRange;
   var spreadsheet = SpreadsheetApp.openById(spreadsheetId);
   var sheet = spreadsheet.getSheetByName(sheetName);
   var incomeSheet = spreadsheet.getSheetByName(incomeSheetName);
   var pendingSheet = spreadsheet.getSheetByName(pendingSheetName);
+  var budgetSheet = spreadsheet.getSheetByName(budgetSheetName);
   var paidSheet = spreadsheet.getSheetByName(paidSheetName);
   var values = sheet.getRange(rangeA1).getDisplayValues();
   var incomeValues = incomeSheet ? incomeSheet.getRange(incomeRangeA1).getDisplayValues() : [];
   var pendingValues = pendingSheet ? pendingSheet.getRange(pendingRangeA1).getDisplayValues() : [];
+  var budgetValues = budgetSheet ? budgetSheet.getRange(budgetRangeA1).getDisplayValues() : [];
   var paidDetailRawValues = paidSheet ? paidSheet.getRange(paidDetailRangeA1).getDisplayValues() : [];
   var paidDetailHeader = paidDetailRawValues.length > 1 ? sheetRowToPaidDetail(paidDetailRawValues[1]) : [];
   var paidDetailValues = sheetRowsToPaidDetails(paidDetailRawValues);
@@ -49,6 +53,11 @@ function doGet(event) {
       return value !== '';
     }) && row[0] !== 'Grand Total';
   });
+  var budgetRows = budgetValues.slice(1).filter(function(row) {
+    return row.some(function(value) {
+      return value !== '';
+    });
+  });
 
   var payload = {
     source: {
@@ -57,10 +66,12 @@ function doGet(event) {
       sheetName: sheetName,
       incomeSheetName: incomeSheetName,
       pendingSheetName: pendingSheetName,
+      budgetSheetName: budgetSheetName,
       paidSheetName: paidSheetName,
       range: rangeA1,
       incomeRange: incomeRangeA1,
       pendingRange: pendingRangeA1,
+      budgetRange: budgetRangeA1,
       paidDetailRange: paidDetailRangeA1,
       snapshotDate: snapshotDate
     },
@@ -68,6 +79,7 @@ function doGet(event) {
     rows: dataRows,
     pendingHeader: pendingHeader,
     pendingRows: pendingRows,
+    budgetRows: budgetRows,
     incomeSummary: normalizeIncomeSummaryValues(incomeValues),
     paidDetailHeader: paidDetailHeader,
     paidDetailRows: paidDetailValues,
@@ -105,10 +117,12 @@ function getDefaultSourceConfig() {
     sheetName: 'Summary รายจ่าย',
     incomeSheetName: 'Summary รายรับ',
     pendingSheetName: 'เตรียมจ่าย',
+    budgetSheetName: 'Budget',
     paidSheetName: 'จ่ายแล้ว_Unfiltered',
     range: 'A:F',
     incomeRange: 'A:Z',
     pendingRange: 'A:G',
+    budgetRange: 'A:Z',
     paidDetailRange: 'A:P'
   };
 }
@@ -129,10 +143,12 @@ function getRequestSourceConfig(params) {
     'sheetName',
     'incomeSheetName',
     'pendingSheetName',
+    'budgetSheetName',
     'paidSheetName',
     'range',
     'incomeRange',
     'pendingRange',
+    'budgetRange',
     'paidDetailRange'
   ].forEach(function(key) {
     if (params[key]) {
@@ -153,10 +169,12 @@ function saveSourceConfig(params) {
     sheetName: params.sheetName || defaults.sheetName,
     incomeSheetName: params.incomeSheetName || defaults.incomeSheetName,
     pendingSheetName: params.pendingSheetName || defaults.pendingSheetName,
+    budgetSheetName: params.budgetSheetName || defaults.budgetSheetName,
     paidSheetName: params.paidSheetName || defaults.paidSheetName,
     range: params.range || defaults.range,
     incomeRange: params.incomeRange || defaults.incomeRange,
     pendingRange: params.pendingRange || defaults.pendingRange,
+    budgetRange: params.budgetRange || defaults.budgetRange,
     paidDetailRange: params.paidDetailRange || defaults.paidDetailRange
   };
 
