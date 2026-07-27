@@ -366,13 +366,6 @@ h2 {
   align-items: start;
 }
 
-.pending-heading-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
 .pending-input-heading h3 {
   margin: 0;
   font-size: 1.3rem;
@@ -441,17 +434,6 @@ h2 {
 .pending-table td:nth-child(4),
 .pending-table th:nth-child(4) {
   text-align: right;
-}
-
-.pending-approval-cell {
-  width: 72px;
-  text-align: center;
-}
-
-.pending-approval-checkbox {
-  width: 20px;
-  height: 20px;
-  accent-color: var(--forest);
 }
 
 .pending-table tbody tr.pending-budgeted td {
