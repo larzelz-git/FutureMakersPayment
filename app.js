@@ -529,6 +529,7 @@ function normalizePendingDisplayRows(matrix) {
       subcategoryActual: parseAmount(row[2]),
       description: row[3] || "",
       prPo: row[4] || "",
+      approve: row[5] || "",
       amount: pickPendingAmount(row),
     }))
     .filter((row) => row.category || row.subcategory || row.description);
@@ -1554,7 +1555,7 @@ function renderPendingPreview(rows, budgetPrPoSet = new Set()) {
   if (!rows.length) {
     body.innerHTML = `
       <tr>
-        <td colspan="5" class="pending-empty-cell">ยังไม่มีข้อมูลเตรียมจ่าย</td>
+        <td colspan="6" class="pending-empty-cell">ยังไม่มีข้อมูลเตรียมจ่าย</td>
       </tr>
     `;
     return;
@@ -1568,6 +1569,7 @@ function renderPendingPreview(rows, budgetPrPoSet = new Set()) {
 
         return `
         <tr class="${budgetClass}">
+          <td class="pending-approval-cell"><input type="checkbox" class="pending-approval-checkbox" data-pr-po="${escapeHtml(row.prPo)}" ${String(row.approve).trim().toLowerCase() === "approve" ? "checked" : ""} aria-label="อนุมัติ ${escapeHtml(row.prPo || row.description)}"></td>
           <td>${escapeHtml(row.category)}</td>
           <td>${escapeHtml(row.subcategory)}</td>
           <td>${formatCurrency(row.subcategoryActual)}</td>
@@ -1578,6 +1580,58 @@ function renderPendingPreview(rows, budgetPrPoSet = new Set()) {
       }
     )
     .join("");
+}
+
+async function submitPendingApprovals() {
+  const liveJsonUrl = window.SUMMARY_DASHBOARD_DATA.source.liveJsonUrl;
+
+  if (!liveJsonUrl) {
+    setLiveStatus("ยังไม่ได้ตั้งค่า Apps Script สำหรับบันทึก Approve");
+    return;
+  }
+
+  const approvals = Array.from(document.querySelectorAll(".pending-approval-checkbox"))
+    .map((checkbox) => ({
+      prPo: checkbox.dataset.prPo || "",
+      approved: checkbox.checked,
+    }))
+    .filter((item) => item.prPo);
+
+  const button = document.getElementById("pending-submit-button");
+  if (button) {
+    button.disabled = true;
+  }
+  setLiveStatus("กำลังบันทึก Approve ลงชีท...");
+
+  try {
+    const url = new URL(liveJsonUrl);
+    url.searchParams.set("action", "savePendingApprovals");
+    url.searchParams.set("spreadsheetId", window.SUMMARY_DASHBOARD_DATA.source.spreadsheetId || "");
+    url.searchParams.set("pendingSheetName", window.SUMMARY_DASHBOARD_DATA.source.pendingSheetName || "เตรียมจ่าย");
+    url.searchParams.set("approvals", JSON.stringify(approvals));
+    const payload = await requestJsonp(url);
+
+    if (!payload.ok) {
+      throw new Error(payload.error || "บันทึก Approve ไม่สำเร็จ");
+    }
+
+    setLiveStatus(`บันทึก Approve แล้ว ${payload.updatedRows || 0} รายการ`);
+    await refreshDashboard();
+  } catch (error) {
+    setLiveStatus(`บันทึก Approve ไม่สำเร็จ: ${error.message}`);
+  } finally {
+    if (button) {
+      button.disabled = false;
+    }
+  }
+}
+
+function setupPendingApprovalSubmit() {
+  const button = document.getElementById("pending-submit-button");
+
+  if (button) {
+    button.addEventListener("click", submitPendingApprovals);
+  }
 }
 
 function setupPendingPastePreview() {
@@ -2008,6 +2062,7 @@ function bootstrap() {
   setupMainViewTabs();
   setupPanelTabs();
   setupPendingPastePreview();
+  setupPendingApprovalSubmit();
   setupIncomeWorkspace();
   refreshDashboard();
 }

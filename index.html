@@ -10,13 +10,13 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+Thai:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260727.1400" />
+    <link rel="stylesheet" href="./styles.css?v=20260727.1500" />
   </head>
   <body>
     <div class="page-shell">
       <header class="hero">
         <div>
-          <p class="eyebrow">Summary Dashboard (V.20260727.1400)</p>
+          <p class="eyebrow">Summary Dashboard (V.20260727.1500)</p>
           <h1>สรุปรายจ่ายจากชีต `Summary รายจ่าย`</h1>
         </div>
       </header>
@@ -90,13 +90,17 @@
                       <h3>เตรียมจ่าย</h3>
                       <p>ข้อมูลจากชีทแท็บเตรียมจ่าย</p>
                     </div>
-                    <div class="pending-summary" id="pending-preview-summary">0 รายการ · ฿0.00</div>
+                    <div class="pending-heading-actions">
+                      <div class="pending-summary" id="pending-preview-summary">0 รายการ · ฿0.00</div>
+                      <button id="pending-submit-button" class="refresh-button" type="button">Submit</button>
+                    </div>
                   </div>
                 </div>
                 <div class="pending-table-wrap">
                   <table class="pending-table">
                     <thead>
                       <tr>
+                        <th>Approve</th>
                         <th>หมวดหลัก</th>
                         <th>หมวดย่อย</th>
                         <th>จ่ายจริงหมวดย่อย</th>
@@ -106,7 +110,7 @@
                     </thead>
                     <tbody id="pending-preview-body">
                       <tr>
-                        <td colspan="5" class="pending-empty-cell">ยังไม่มีข้อมูลเตรียมจ่าย</td>
+                        <td colspan="6" class="pending-empty-cell">ยังไม่มีข้อมูลเตรียมจ่าย</td>
                       </tr>
                     </tbody>
                   </table>
@@ -271,7 +275,7 @@
       </div>
     </div>
 
-    <script src="./summary-data.js?v=20260727.1400"></script>
-    <script src="./app.js?v=20260727.1400"></script>
+    <script src="./summary-data.js?v=20260727.1500"></script>
+    <script src="./app.js?v=20260727.1500"></script>
   </body>
 </html>

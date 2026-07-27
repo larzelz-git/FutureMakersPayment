@@ -5,6 +5,10 @@ function doGet(event) {
     return saveSourceConfig(params);
   }
 
+  if (params.action === 'savePendingApprovals') {
+    return savePendingApprovals(params);
+  }
+
   var sourceConfig = Object.assign({}, getSourceConfig(), getRequestSourceConfig(params));
   var spreadsheetId = sourceConfig.spreadsheetId;
   var spreadsheetUrl = sourceConfig.spreadsheetUrl;
@@ -90,6 +94,71 @@ function doGet(event) {
   return ContentService
     .createTextOutput(JSON.stringify(payload))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+function savePendingApprovals(params) {
+  var sourceConfig = Object.assign({}, getSourceConfig(), getRequestSourceConfig(params));
+  var spreadsheet = SpreadsheetApp.openById(sourceConfig.spreadsheetId);
+  var sheet = spreadsheet.getSheetByName(sourceConfig.pendingSheetName || 'เตรียมจ่าย');
+
+  if (!sheet) {
+    return outputJsonp(params.callback, { ok: false, error: 'ไม่พบแท็บเตรียมจ่าย' });
+  }
+
+  var approvals = {};
+
+  try {
+    JSON.parse(params.approvals || '[]').forEach(function(item) {
+      var prPo = String(item.prPo || '').trim().toUpperCase();
+
+      if (prPo) {
+        approvals[prPo] = item.approved === true;
+      }
+    });
+  } catch (error) {
+    return outputJsonp(params.callback, { ok: false, error: 'ข้อมูล Approve ไม่ถูกต้อง' });
+  }
+
+  var range = sheet.getDataRange();
+  var values = range.getDisplayValues();
+  var headerIndex = -1;
+  var prPoColumn = -1;
+  var approveColumn = -1;
+
+  values.some(function(row, rowIndex) {
+    var normalized = row.map(function(value) {
+      return String(value || '').trim().toUpperCase();
+    });
+    var foundPrPo = normalized.indexOf('PR/PO');
+    var foundApprove = normalized.indexOf('APPROVE');
+
+    if (foundPrPo !== -1 && foundApprove !== -1) {
+      headerIndex = rowIndex;
+      prPoColumn = foundPrPo;
+      approveColumn = foundApprove;
+      return true;
+    }
+
+    return false;
+  });
+
+  if (headerIndex === -1) {
+    return outputJsonp(params.callback, { ok: false, error: 'ไม่พบหัวตาราง PR/PO และ Approve ในแท็บเตรียมจ่าย' });
+  }
+
+  var output = values.slice(headerIndex + 1).map(function(row) {
+    var prPo = String(row[prPoColumn] || '').trim().toUpperCase();
+    return [prPo && approvals[prPo] === true ? 'approve' : ''];
+  });
+
+  if (output.length) {
+    sheet.getRange(headerIndex + 2, approveColumn + 1, output.length, 1).setValues(output);
+  }
+
+  return outputJsonp(params.callback, {
+    ok: true,
+    updatedRows: output.length
+  });
 }
 
 function getSourceConfig() {
