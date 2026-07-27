@@ -122,7 +122,7 @@ function normalizeRowsWithCarryForward(rawRows) {
 }
 
 function pickPendingAmount(row) {
-  const preferredAmount = parseAmount(row[4]) || parseAmount(row[2]);
+  const preferredAmount = parseAmount(row[2]);
 
   if (preferredAmount > 0) {
     return preferredAmount;
@@ -521,8 +521,7 @@ function normalizePendingDisplayRows(matrix) {
       category: row[0] || "",
       subcategory: row[1] || "",
       subcategoryActual: parseAmount(row[2]),
-      categoryActual: parseAmount(row[3]),
-      description: row[4] || "",
+      description: row[3] || "",
       amount: pickPendingAmount(row),
     }))
     .filter((row) => row.category || row.subcategory || row.description);
@@ -1496,8 +1495,7 @@ function parsePendingPaste(text) {
       category: row[0] || "",
       subcategory: row[1] || "",
       subcategoryActual: parseAmount(row[2]),
-      categoryActual: parseAmount(row[3]),
-      description: row[4] || "",
+      description: row[3] || "",
     }))
     .filter((row) => row.category || row.subcategory || row.description);
 }
@@ -1510,16 +1508,13 @@ function renderPendingPreview(rows) {
     return;
   }
 
-  const total = rows.reduce(
-    (sum, row) => sum + (row.amount ?? (row.subcategoryActual || row.categoryActual)),
-    0
-  );
+  const total = rows.reduce((sum, row) => sum + (row.amount ?? row.subcategoryActual), 0);
   summary.textContent = `${rows.length} รายการ · ${formatCurrency(total)}`;
 
   if (!rows.length) {
     body.innerHTML = `
       <tr>
-        <td colspan="5" class="pending-empty-cell">ยังไม่มีข้อมูลเตรียมจ่าย</td>
+        <td colspan="4" class="pending-empty-cell">ยังไม่มีข้อมูลเตรียมจ่าย</td>
       </tr>
     `;
     return;
@@ -1532,7 +1527,6 @@ function renderPendingPreview(rows) {
           <td>${escapeHtml(row.category)}</td>
           <td>${escapeHtml(row.subcategory)}</td>
           <td>${formatCurrency(row.subcategoryActual)}</td>
-          <td>${formatCurrency(row.categoryActual)}</td>
           <td>${escapeHtml(row.description)}</td>
         </tr>
       `
