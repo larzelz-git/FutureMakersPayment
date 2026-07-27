@@ -515,6 +515,19 @@ function normalizePendingMatrix(matrix) {
   return normalizeRowsWithCarryForward(dataMatrix).filter((row) => row[0] !== "Grand Total");
 }
 
+function normalizePendingDisplayRows(matrix) {
+  return normalizePendingMatrix(matrix)
+    .map((row) => ({
+      category: row[0] || "",
+      subcategory: row[1] || "",
+      subcategoryActual: parseAmount(row[2]),
+      categoryActual: parseAmount(row[3]),
+      description: row[4] || "",
+      amount: pickPendingAmount(row),
+    }))
+    .filter((row) => row.category || row.subcategory || row.description);
+}
+
 function findAmountNearLabel(row, labelIndex) {
   for (let index = labelIndex + 1; index < row.length; index += 1) {
     const amount = parseAmount(row[index]);
@@ -1497,7 +1510,10 @@ function renderPendingPreview(rows) {
     return;
   }
 
-  const total = rows.reduce((sum, row) => sum + (row.subcategoryActual || row.categoryActual), 0);
+  const total = rows.reduce(
+    (sum, row) => sum + (row.amount ?? (row.subcategoryActual || row.categoryActual)),
+    0
+  );
   summary.textContent = `${rows.length} รายการ · ${formatCurrency(total)}`;
 
   if (!rows.length) {
@@ -1902,6 +1918,7 @@ function renderDashboard(sourceData) {
   renderInsights(data);
   renderDetailHead(data);
   renderTableRows(data);
+  renderPendingPreview(normalizePendingDisplayRows(sourceData.pendingRows || []));
   renderIncomeDashboard(incomeRows);
 }
 
