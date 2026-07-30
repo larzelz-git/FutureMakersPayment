@@ -1605,6 +1605,48 @@ function setupPendingPastePreview() {
   });
 }
 
+async function writeTestSuccessToSheet() {
+  const button = document.getElementById("test-write-button");
+  const liveJsonUrl = window.SUMMARY_DASHBOARD_DATA.source.liveJsonUrl;
+
+  if (!liveJsonUrl) {
+    setLiveStatus("ยังไม่ได้ตั้งค่า Apps Script สำหรับทดสอบเขียนไฟล์");
+    return;
+  }
+
+  if (button) {
+    button.disabled = true;
+  }
+  setLiveStatus("กำลังเขียน Success ลง Test!A1...");
+
+  try {
+    const url = new URL(liveJsonUrl);
+    url.searchParams.set("action", "writeTestSuccess");
+    url.searchParams.set("spreadsheetId", window.SUMMARY_DASHBOARD_DATA.source.spreadsheetId || "");
+    const payload = await requestJsonp(url);
+
+    if (!payload.ok) {
+      throw new Error(payload.error || "เขียนไฟล์ไม่สำเร็จ");
+    }
+
+    setLiveStatus("เขียน Success ลง Test!A1 สำเร็จ");
+  } catch (error) {
+    setLiveStatus(`เขียนไฟล์ไม่สำเร็จ: ${error.message}`);
+  } finally {
+    if (button) {
+      button.disabled = false;
+    }
+  }
+}
+
+function setupTestWriteButton() {
+  const button = document.getElementById("test-write-button");
+
+  if (button) {
+    button.addEventListener("click", writeTestSuccessToSheet);
+  }
+}
+
 function parseIncomePaste(text) {
   return text
     .split(/\r?\n/)
@@ -2010,6 +2052,7 @@ function bootstrap() {
   setupMainViewTabs();
   setupPanelTabs();
   setupPendingPastePreview();
+  setupTestWriteButton();
   setupIncomeWorkspace();
   refreshDashboard();
 }
