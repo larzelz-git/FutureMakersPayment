@@ -318,9 +318,11 @@ function getSourceConfig() {
 
   try {
     const saved = JSON.parse(window.localStorage.getItem(SOURCE_STORAGE_KEY) || "{}");
+    const savedSource = saved.spreadsheetId ? saved : {};
     const sourceConfig = {
       ...defaultSource,
-      ...saved,
+      ...savedSource,
+      testWriteUrl: saved.testWriteUrl || defaultSource.testWriteUrl || "",
       ...urlSource,
     };
 
@@ -867,6 +869,9 @@ async function fetchSheetMatrix(sheetName, range) {
 
 async function fetchLiveSummaryData() {
   const fallback = window.SUMMARY_DASHBOARD_DATA;
+  return fallback;
+
+  /* eslint-disable no-unreachable */
   const liveJsonUrl = "";
 
   if (liveJsonUrl) {
@@ -921,6 +926,7 @@ async function fetchLiveSummaryData() {
       actualGrandTotal: payload.actualGrandTotal || fallback.actualGrandTotal,
     };
   }
+  /* eslint-enable no-unreachable */
 
   try {
     return await fetchLiveSummaryDataViaScript();
