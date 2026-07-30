@@ -1422,6 +1422,9 @@ function setupSourceControls() {
   }
 
   function closeModal() {
+    const sourceConfig = getPendingSourceConfig();
+    saveLocalSourceConfig(sourceConfig);
+    updateGlobalSource(sourceConfig);
     sourceModal.hidden = true;
   }
 
