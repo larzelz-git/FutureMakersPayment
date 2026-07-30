@@ -427,6 +427,10 @@ h2 {
   color: #fff;
 }
 
+.test-write-button {
+  margin-left: auto;
+}
+
 .income-table th {
   background: var(--forest);
 }

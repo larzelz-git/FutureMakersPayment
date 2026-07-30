@@ -9,6 +9,10 @@ function doGet(event) {
     return savePendingApprovals(params);
   }
 
+  if (params.action === 'writeTestSuccess') {
+    return writeTestSuccess(params);
+  }
+
   var sourceConfig = Object.assign({}, getSourceConfig(), getRequestSourceConfig(params));
   var spreadsheetId = sourceConfig.spreadsheetId;
   var spreadsheetUrl = sourceConfig.spreadsheetUrl;
