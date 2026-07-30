@@ -347,6 +347,7 @@ function saveLocalSourceConfig(sourceConfig) {
       paidSheetName: sourceConfig.paidSheetName,
       paidDetailRange: sourceConfig.paidDetailRange,
       liveJsonUrl: sourceConfig.liveJsonUrl,
+      testWriteUrl: sourceConfig.testWriteUrl,
     })
   );
 }
@@ -413,37 +414,8 @@ function requestJsonp(url) {
 }
 
 async function saveSourceConfig(sourceConfig) {
-  const liveJsonUrl = window.SUMMARY_DASHBOARD_DATA.source.liveJsonUrl;
-
-  if (!liveJsonUrl) {
-    saveLocalSourceConfig(sourceConfig);
-    return sourceConfig;
-  }
-
-  const url = new URL(liveJsonUrl);
-
-  url.searchParams.set("action", "saveSource");
-  url.searchParams.set("spreadsheetUrl", sourceConfig.spreadsheetUrl || "");
-  url.searchParams.set("spreadsheetId", sourceConfig.spreadsheetId || "");
-  url.searchParams.set("sheetName", sourceConfig.sheetName || "Summary รายจ่าย");
-  url.searchParams.set("incomeSheetName", sourceConfig.incomeSheetName || "Summary รายรับ");
-  url.searchParams.set("pendingSheetName", sourceConfig.pendingSheetName || "เตรียมจ่าย");
-  url.searchParams.set("budgetSheetName", sourceConfig.budgetSheetName || "Budget");
-  url.searchParams.set("paidSheetName", sourceConfig.paidSheetName || DEFAULT_PAID_DETAIL_SHEET_NAME);
-  url.searchParams.set("range", sourceConfig.range || "A:F");
-  url.searchParams.set("incomeRange", sourceConfig.incomeRange || "A:Z");
-  url.searchParams.set("pendingRange", sourceConfig.pendingRange || "A:G");
-  url.searchParams.set("budgetRange", sourceConfig.budgetRange || "A:Z");
-  url.searchParams.set("paidDetailRange", sourceConfig.paidDetailRange || DEFAULT_PAID_DETAIL_RANGE);
-
-  const payload = await requestJsonp(url);
-
-  if (!payload.ok) {
-    throw new Error(payload.error || "Source config save failed");
-  }
-
-  saveLocalSourceConfig(payload.source);
-  return payload.source;
+  saveLocalSourceConfig(sourceConfig);
+  return sourceConfig;
 }
 
 function extractSpreadsheetId(url) {
@@ -895,7 +867,7 @@ async function fetchSheetMatrix(sheetName, range) {
 
 async function fetchLiveSummaryData() {
   const fallback = window.SUMMARY_DASHBOARD_DATA;
-  const liveJsonUrl = fallback.source.liveJsonUrl;
+  const liveJsonUrl = "";
 
   if (liveJsonUrl) {
     const url = new URL(liveJsonUrl);
@@ -1017,7 +989,7 @@ function renderSourceInfo(data) {
   const expenseLastUpdated = document.getElementById("expense-last-updated");
   const sourceLinkInput = document.getElementById("source-link-input");
   const sourceSheetNameInput = document.getElementById("source-sheet-name-input");
-  const sourceLiveJsonUrlInput = document.getElementById("source-live-json-url-input");
+  const sourceTestWriteUrlInput = document.getElementById("source-test-write-url-input");
   const sourceShareUrl = document.getElementById("source-share-url");
 
   if (sourceLink) {
@@ -1395,7 +1367,7 @@ function setupSourceControls() {
     !applyButton ||
     !sourceLinkInput ||
     !sourceSheetNameInput ||
-    !sourceLiveJsonUrlInput ||
+    !sourceTestWriteUrlInput ||
     !sourceShareUrl ||
     !copyUrlButton ||
     !sourceModal ||
@@ -1408,7 +1380,7 @@ function setupSourceControls() {
   function getPendingSourceConfig() {
     const spreadsheetUrl = sourceLinkInput.value.trim();
     const sheetName = sourceSheetNameInput.value.trim();
-    const liveJsonUrl = sourceLiveJsonUrlInput.value.trim();
+    const testWriteUrl = sourceTestWriteUrlInput.value.trim();
     const spreadsheetId = extractSpreadsheetId(spreadsheetUrl);
 
     return {
@@ -1424,7 +1396,7 @@ function setupSourceControls() {
       budgetRange: window.SUMMARY_DASHBOARD_DATA.source.budgetRange || "A:Z",
       paidSheetName: window.SUMMARY_DASHBOARD_DATA.source.paidSheetName || DEFAULT_PAID_DETAIL_SHEET_NAME,
       paidDetailRange: window.SUMMARY_DASHBOARD_DATA.source.paidDetailRange || DEFAULT_PAID_DETAIL_RANGE,
-      liveJsonUrl,
+      testWriteUrl,
     };
   }
 
@@ -1438,7 +1410,10 @@ function setupSourceControls() {
   }
 
   function openModal() {
-    sourceLiveJsonUrlInput.value = window.SUMMARY_DASHBOARD_DATA.source.liveJsonUrl || "";
+    sourceTestWriteUrlInput.value =
+      window.SUMMARY_DASHBOARD_DATA.source.testWriteUrl ||
+      window.SUMMARY_DASHBOARD_DATA.source.liveJsonUrl ||
+      "";
     updateShareUrlPreview();
     sourceModal.hidden = false;
   }
@@ -1629,7 +1604,9 @@ function setupPendingPastePreview() {
 
 async function writeTestSuccessToSheet() {
   const button = document.getElementById("test-write-confirm-button");
-  const liveJsonUrl = window.SUMMARY_DASHBOARD_DATA.source.liveJsonUrl;
+  const liveJsonUrl =
+    window.SUMMARY_DASHBOARD_DATA.source.testWriteUrl ||
+    window.SUMMARY_DASHBOARD_DATA.source.liveJsonUrl;
 
   if (!liveJsonUrl) {
     setLiveStatus("ยังไม่ได้ตั้งค่า Apps Script สำหรับทดสอบเขียนไฟล์");
@@ -2065,7 +2042,7 @@ async function refreshDashboard() {
     const liveData = await fetchLiveSummaryData();
     updateGlobalSource(liveData.source);
     renderDashboard(liveData);
-    setLiveStatus(liveData.source.liveJsonUrl ? "เชื่อมต่อ Real Time ผ่าน Apps Script สำเร็จ" : "เชื่อมต่อ Real Time สำเร็จ");
+    setLiveStatus("แสดงข้อมูล Snapshot ล่าสุด");
   } catch (error) {
     renderDashboard(window.SUMMARY_DASHBOARD_DATA);
     setLiveStatus("ดึงสดไม่ได้ ใช้ snapshot ล่าสุดแทน");
