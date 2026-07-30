@@ -1548,6 +1548,7 @@ function parsePendingPaste(text) {
 }
 
 const pendingSelectedRows = new Set();
+let pendingPreviewRows = [];
 
 function renderPendingPreview(rows, budgetPrPoSet = new Set()) {
   const body = document.getElementById("pending-preview-body");
@@ -1557,6 +1558,8 @@ function renderPendingPreview(rows, budgetPrPoSet = new Set()) {
   if (!body || !summary) {
     return;
   }
+
+  pendingPreviewRows = rows;
 
   const total = rows.reduce((sum, row) => sum + (row.amount ?? row.subcategoryActual), 0);
   summary.textContent = `${rows.length} รายการ · ${formatCurrency(total)}`;
@@ -1654,36 +1657,45 @@ function setupPendingPastePreview() {
   });
 }
 
-async function writeTestSuccessToSheet() {
+async function savePendingApprovalsToSheet() {
   const button = document.getElementById("test-write-confirm-button");
   const liveJsonUrl =
     window.SUMMARY_DASHBOARD_DATA.source.testWriteUrl ||
     window.SUMMARY_DASHBOARD_DATA.source.liveJsonUrl;
 
   if (!liveJsonUrl) {
-    setLiveStatus("ยังไม่ได้ตั้งค่า Apps Script สำหรับทดสอบเขียนไฟล์");
+    setLiveStatus("ยังไม่ได้ตั้งค่า Apps Script สำหรับบันทึก Approve");
     return false;
   }
 
   if (button) {
     button.disabled = true;
   }
-  setLiveStatus("กำลังเขียน Success ลง Test!A1...");
+  setLiveStatus("กำลังบันทึก Approve ลงชีทเตรียมจ่าย...");
 
   try {
     const url = new URL(liveJsonUrl);
-    url.searchParams.set("action", "writeTestSuccess");
+    url.searchParams.set("action", "savePendingApprovals");
     url.searchParams.set("spreadsheetId", window.SUMMARY_DASHBOARD_DATA.source.spreadsheetId || "");
+    url.searchParams.set(
+      "approvals",
+      JSON.stringify(
+        pendingPreviewRows.map((row, index) => ({
+          prPo: row.prPo || "",
+          approved: pendingSelectedRows.has(index),
+        }))
+      )
+    );
     const payload = await requestJsonp(url);
 
     if (!payload.ok) {
-      throw new Error(payload.error || "เขียนไฟล์ไม่สำเร็จ");
+      throw new Error(payload.error || "บันทึก Approve ไม่สำเร็จ");
     }
 
-    setLiveStatus("เขียน Success ลง Test!A1 สำเร็จ");
+    setLiveStatus(`บันทึก Approve สำเร็จ ${payload.updatedRows || 0} รายการ`);
     return true;
   } catch (error) {
-    setLiveStatus(`เขียนไฟล์ไม่สำเร็จ: ${error.message}`);
+    setLiveStatus(`บันทึก Approve ไม่สำเร็จ: ${error.message}`);
     return false;
   } finally {
     if (button) {
@@ -1718,7 +1730,7 @@ function setupTestWriteButton() {
     }
   });
   confirmButton.addEventListener("click", async () => {
-    if (await writeTestSuccessToSheet()) {
+    if (await savePendingApprovalsToSheet()) {
       closeModal();
     }
   });
