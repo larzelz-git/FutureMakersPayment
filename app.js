@@ -1547,9 +1547,12 @@ function parsePendingPaste(text) {
     .filter((row) => row.category || row.subcategory || row.description);
 }
 
+const pendingSelectedRows = new Set();
+
 function renderPendingPreview(rows, budgetPrPoSet = new Set()) {
   const body = document.getElementById("pending-preview-body");
   const summary = document.getElementById("pending-preview-summary");
+  const selectAll = document.getElementById("pending-select-all");
 
   if (!body || !summary) {
     return;
@@ -1561,7 +1564,7 @@ function renderPendingPreview(rows, budgetPrPoSet = new Set()) {
   if (!rows.length) {
     body.innerHTML = `
       <tr>
-        <td colspan="6" class="pending-empty-cell">ยังไม่มีข้อมูลเตรียมจ่าย</td>
+        <td colspan="7" class="pending-empty-cell">ยังไม่มีข้อมูลเตรียมจ่าย</td>
       </tr>
     `;
     return;
@@ -1569,12 +1572,21 @@ function renderPendingPreview(rows, budgetPrPoSet = new Set()) {
 
   body.innerHTML = rows
     .map(
-      (row) => {
+      (row, index) => {
         const isBudgeted = normalizePrPo(row.prPo) && budgetPrPoSet.has(normalizePrPo(row.prPo));
         const budgetClass = isBudgeted ? "pending-budgeted" : "pending-unbudgeted";
 
         return `
         <tr class="${budgetClass}">
+          <td class="pending-select-column">
+            <input
+              class="pending-row-checkbox"
+              type="checkbox"
+              data-pending-row-index="${index}"
+              aria-label="เลือกรายการเตรียมจ่าย ${index + 1}"
+              ${pendingSelectedRows.has(index) ? "checked" : ""}
+            />
+          </td>
           <td>${escapeHtml(row.approve || "")}</td>
           <td>${escapeHtml(row.category)}</td>
           <td>${escapeHtml(row.subcategory)}</td>
@@ -1586,6 +1598,37 @@ function renderPendingPreview(rows, budgetPrPoSet = new Set()) {
       }
     )
     .join("");
+
+  body.querySelectorAll(".pending-row-checkbox").forEach((checkbox) => {
+    checkbox.addEventListener("change", () => {
+      const index = Number(checkbox.dataset.pendingRowIndex);
+
+      if (checkbox.checked) {
+        pendingSelectedRows.add(index);
+      } else {
+        pendingSelectedRows.delete(index);
+      }
+
+      if (selectAll) {
+        selectAll.checked = rows.length > 0 && pendingSelectedRows.size === rows.length;
+        selectAll.indeterminate = pendingSelectedRows.size > 0 && pendingSelectedRows.size < rows.length;
+      }
+    });
+  });
+
+  if (selectAll) {
+    selectAll.checked = rows.length > 0 && pendingSelectedRows.size === rows.length;
+    selectAll.indeterminate = pendingSelectedRows.size > 0 && pendingSelectedRows.size < rows.length;
+    selectAll.onchange = () => {
+      if (selectAll.checked) {
+        rows.forEach((_, index) => pendingSelectedRows.add(index));
+      } else {
+        pendingSelectedRows.clear();
+      }
+
+      renderPendingPreview(rows, budgetPrPoSet);
+    };
+  }
 }
 
 function setupPendingPastePreview() {

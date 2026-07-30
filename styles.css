@@ -449,6 +449,26 @@ h2 {
   color: #fff;
 }
 
+.pending-select-column {
+  width: 78px;
+  text-align: center !important;
+}
+
+.pending-select-all-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.pending-row-checkbox,
+#pending-select-all {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--forest);
+  cursor: pointer;
+}
+
 .test-write-button {
   padding: 12px 18px;
   border: 0;

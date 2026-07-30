@@ -10,13 +10,13 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+Thai:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260730.2400" />
+    <link rel="stylesheet" href="./styles.css?v=20260730.2500" />
   </head>
   <body>
     <div class="page-shell">
       <header class="hero">
         <div>
-          <p class="eyebrow">Summary Dashboard (V.20260730.2400)</p>
+          <p class="eyebrow">Summary Dashboard (V.20260730.2500)</p>
           <h1>สรุปรายจ่ายจากชีต `Summary รายจ่าย`</h1>
         </div>
         <div class="hero-actions">
@@ -103,6 +103,12 @@
                   <table class="pending-table">
                     <thead>
                       <tr>
+                        <th class="pending-select-column">
+                          <label class="pending-select-all-label">
+                            <input id="pending-select-all" type="checkbox" aria-label="เลือกเตรียมจ่ายทั้งหมด" />
+                            <span>เลือก</span>
+                          </label>
+                        </th>
                         <th>Approve</th>
                         <th>หมวดหลัก</th>
                         <th>หมวดย่อย</th>
@@ -113,7 +119,7 @@
                     </thead>
                     <tbody id="pending-preview-body">
                       <tr>
-                        <td colspan="6" class="pending-empty-cell">ยังไม่มีข้อมูลเตรียมจ่าย</td>
+                        <td colspan="7" class="pending-empty-cell">ยังไม่มีข้อมูลเตรียมจ่าย</td>
                       </tr>
                     </tbody>
                   </table>
@@ -306,7 +312,7 @@
       </div>
     </div>
 
-    <script src="./summary-data.js?v=20260730.2400"></script>
-    <script src="./app.js?v=20260730.2400"></script>
+    <script src="./summary-data.js?v=20260730.2500"></script>
+    <script src="./app.js?v=20260730.2500"></script>
   </body>
 </html>
