@@ -33,7 +33,6 @@ const SOURCE_URL_KEYS = [
   "pendingRange",
   "budgetRange",
   "paidDetailRange",
-  "liveJsonUrl",
 ];
 const DETAIL_COLUMNS = [
   { key: "category", label: "หมวดหลัก", type: "text" },
@@ -1013,6 +1012,7 @@ function renderSourceInfo(data) {
   const expenseLastUpdated = document.getElementById("expense-last-updated");
   const sourceLinkInput = document.getElementById("source-link-input");
   const sourceSheetNameInput = document.getElementById("source-sheet-name-input");
+  const sourceLiveJsonUrlInput = document.getElementById("source-live-json-url-input");
   const sourceShareUrl = document.getElementById("source-share-url");
 
   if (sourceLink) {
@@ -1390,6 +1390,7 @@ function setupSourceControls() {
     !applyButton ||
     !sourceLinkInput ||
     !sourceSheetNameInput ||
+    !sourceLiveJsonUrlInput ||
     !sourceShareUrl ||
     !copyUrlButton ||
     !sourceModal ||
@@ -1402,6 +1403,7 @@ function setupSourceControls() {
   function getPendingSourceConfig() {
     const spreadsheetUrl = sourceLinkInput.value.trim();
     const sheetName = sourceSheetNameInput.value.trim();
+    const liveJsonUrl = sourceLiveJsonUrlInput.value.trim();
     const spreadsheetId = extractSpreadsheetId(spreadsheetUrl);
 
     return {
@@ -1417,7 +1419,7 @@ function setupSourceControls() {
       budgetRange: window.SUMMARY_DASHBOARD_DATA.source.budgetRange || "A:Z",
       paidSheetName: window.SUMMARY_DASHBOARD_DATA.source.paidSheetName || DEFAULT_PAID_DETAIL_SHEET_NAME,
       paidDetailRange: window.SUMMARY_DASHBOARD_DATA.source.paidDetailRange || DEFAULT_PAID_DETAIL_RANGE,
-      liveJsonUrl: window.SUMMARY_DASHBOARD_DATA.source.liveJsonUrl || "",
+      liveJsonUrl,
     };
   }
 
@@ -1431,6 +1433,7 @@ function setupSourceControls() {
   }
 
   function openModal() {
+    sourceLiveJsonUrlInput.value = window.SUMMARY_DASHBOARD_DATA.source.liveJsonUrl || "";
     updateShareUrlPreview();
     sourceModal.hidden = false;
   }
