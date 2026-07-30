@@ -1657,7 +1657,7 @@ function setupPendingPastePreview() {
   });
 }
 
-async function savePendingApprovalsToSheet() {
+async function savePendingApprovalsToSheet(password) {
   const button = document.getElementById("test-write-confirm-button");
   const liveJsonUrl =
     window.SUMMARY_DASHBOARD_DATA.source.testWriteUrl ||
@@ -1677,6 +1677,7 @@ async function savePendingApprovalsToSheet() {
     const url = new URL(liveJsonUrl);
     url.searchParams.set("action", "savePendingApprovals");
     url.searchParams.set("spreadsheetId", window.SUMMARY_DASHBOARD_DATA.source.spreadsheetId || "");
+    url.searchParams.set("password", password);
     url.searchParams.set(
       "approvals",
       JSON.stringify(
@@ -1710,17 +1711,21 @@ function setupTestWriteButton() {
   const closeButton = document.getElementById("test-write-modal-close-button");
   const cancelButton = document.getElementById("test-write-cancel-button");
   const confirmButton = document.getElementById("test-write-confirm-button");
+  const passwordInput = document.getElementById("approve-password-input");
 
-  if (!openButton || !modal || !closeButton || !cancelButton || !confirmButton) {
+  if (!openButton || !modal || !closeButton || !cancelButton || !confirmButton || !passwordInput) {
     return;
   }
 
   const closeModal = () => {
+    passwordInput.value = "";
     modal.hidden = true;
   };
 
   openButton.addEventListener("click", () => {
+    passwordInput.value = "";
     modal.hidden = false;
+    passwordInput.focus();
   });
   closeButton.addEventListener("click", closeModal);
   cancelButton.addEventListener("click", closeModal);
@@ -1730,7 +1735,15 @@ function setupTestWriteButton() {
     }
   });
   confirmButton.addEventListener("click", async () => {
-    if (await savePendingApprovalsToSheet()) {
+    const password = passwordInput.value.trim();
+
+    if (!password) {
+      setLiveStatus("กรุณากรอกรหัสผ่าน");
+      passwordInput.focus();
+      return;
+    }
+
+    if (await savePendingApprovalsToSheet(password)) {
       closeModal();
     }
   });
