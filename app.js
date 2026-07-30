@@ -914,6 +914,11 @@ async function fetchLiveSummaryData() {
     }
 
     const payload = await response.json();
+
+    if (!payload || !payload.source || !Array.isArray(payload.rows)) {
+      throw new Error(payload?.error || "Live data response is incomplete");
+    }
+
     const mergedSource = {
       ...fallback.source,
       ...payload.source,
