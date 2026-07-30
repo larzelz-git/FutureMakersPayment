@@ -1363,6 +1363,7 @@ function setupSourceControls() {
   const applyButton = document.getElementById("source-apply-button");
   const sourceLinkInput = document.getElementById("source-link-input");
   const sourceSheetNameInput = document.getElementById("source-sheet-name-input");
+  const sourceTestWriteUrlInput = document.getElementById("source-test-write-url-input");
   const sourceShareUrl = document.getElementById("source-share-url");
   const copyUrlButton = document.getElementById("source-copy-url-button");
   const sourceModal = document.getElementById("source-modal");
