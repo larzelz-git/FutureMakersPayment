@@ -264,6 +264,16 @@ h2 {
   box-shadow: var(--shadow);
 }
 
+.test-write-modal-card {
+  width: min(520px, 100%);
+}
+
+.test-write-modal-card > p {
+  margin: 18px 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
 .modal-close-button {
   padding: 10px 14px;
   border: 1px solid var(--line);

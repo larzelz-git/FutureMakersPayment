@@ -1606,12 +1606,12 @@ function setupPendingPastePreview() {
 }
 
 async function writeTestSuccessToSheet() {
-  const button = document.getElementById("test-write-button");
+  const button = document.getElementById("test-write-confirm-button");
   const liveJsonUrl = window.SUMMARY_DASHBOARD_DATA.source.liveJsonUrl;
 
   if (!liveJsonUrl) {
     setLiveStatus("ยังไม่ได้ตั้งค่า Apps Script สำหรับทดสอบเขียนไฟล์");
-    return;
+    return false;
   }
 
   if (button) {
@@ -1630,8 +1630,10 @@ async function writeTestSuccessToSheet() {
     }
 
     setLiveStatus("เขียน Success ลง Test!A1 สำเร็จ");
+    return true;
   } catch (error) {
     setLiveStatus(`เขียนไฟล์ไม่สำเร็จ: ${error.message}`);
+    return false;
   } finally {
     if (button) {
       button.disabled = false;
@@ -1640,11 +1642,35 @@ async function writeTestSuccessToSheet() {
 }
 
 function setupTestWriteButton() {
-  const button = document.getElementById("test-write-button");
+  const openButton = document.getElementById("test-write-button");
+  const modal = document.getElementById("test-write-modal");
+  const closeButton = document.getElementById("test-write-modal-close-button");
+  const cancelButton = document.getElementById("test-write-cancel-button");
+  const confirmButton = document.getElementById("test-write-confirm-button");
 
-  if (button) {
-    button.addEventListener("click", writeTestSuccessToSheet);
+  if (!openButton || !modal || !closeButton || !cancelButton || !confirmButton) {
+    return;
   }
+
+  const closeModal = () => {
+    modal.hidden = true;
+  };
+
+  openButton.addEventListener("click", () => {
+    modal.hidden = false;
+  });
+  closeButton.addEventListener("click", closeModal);
+  cancelButton.addEventListener("click", closeModal);
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) {
+      closeModal();
+    }
+  });
+  confirmButton.addEventListener("click", async () => {
+    if (await writeTestSuccessToSheet()) {
+      closeModal();
+    }
+  });
 }
 
 function parseIncomePaste(text) {

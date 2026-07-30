@@ -10,13 +10,13 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+Thai:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260730.1000" />
+    <link rel="stylesheet" href="./styles.css?v=20260730.1100" />
   </head>
   <body>
     <div class="page-shell">
       <header class="hero">
         <div>
-          <p class="eyebrow">Summary Dashboard (V.20260730.1000)</p>
+          <p class="eyebrow">Summary Dashboard (V.20260730.1100)</p>
           <h1>สรุปรายจ่ายจากชีต `Summary รายจ่าย`</h1>
         </div>
       </header>
@@ -273,7 +273,24 @@
       </div>
     </div>
 
-    <script src="./summary-data.js?v=20260730.1000"></script>
-    <script src="./app.js?v=20260730.1000"></script>
+    <div id="test-write-modal" class="modal-backdrop" hidden>
+      <div class="modal-card test-write-modal-card" role="dialog" aria-modal="true" aria-labelledby="test-write-modal-title">
+        <div class="panel-heading">
+          <div>
+            <p class="section-label">File Write Test</p>
+            <h2 id="test-write-modal-title">ทดสอบเขียนไฟล์</h2>
+          </div>
+          <button id="test-write-modal-close-button" class="modal-close-button" type="button">ปิด</button>
+        </div>
+        <p>ต้องการเขียนคำว่า <strong>Success</strong> ลงใน <strong>Test!A1</strong> ใช่ไหม?</p>
+        <div class="source-actions">
+          <button id="test-write-cancel-button" class="ghost-button" type="button">ยกเลิก</button>
+          <button id="test-write-confirm-button" class="refresh-button" type="button">ยืนยันการเขียน</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="./summary-data.js?v=20260730.1100"></script>
+    <script src="./app.js?v=20260730.1100"></script>
   </body>
 </html>
