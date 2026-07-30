@@ -1486,6 +1486,20 @@ function setupSourceControls() {
   });
 }
 
+function setupSourceModalTrigger() {
+  const openButton = document.getElementById("source-modal-open-button");
+  const sourceModal = document.getElementById("source-modal");
+
+  if (!openButton || !sourceModal || openButton.dataset.sourceTriggerReady === "true") {
+    return;
+  }
+
+  openButton.dataset.sourceTriggerReady = "true";
+  openButton.addEventListener("click", () => {
+    sourceModal.hidden = false;
+  });
+}
+
 function setupPanelTabs() {
   const tabs = Array.from(document.querySelectorAll("[data-tab-target]"));
 
@@ -2078,6 +2092,7 @@ function bootstrap() {
   });
 
   setupSourceControls();
+  setupSourceModalTrigger();
   setupMainViewTabs();
   setupPanelTabs();
   setupPendingPastePreview();
