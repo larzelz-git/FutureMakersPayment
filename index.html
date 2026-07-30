@@ -10,13 +10,13 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+Thai:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260730.1900" />
+    <link rel="stylesheet" href="./styles.css?v=20260730.2000" />
   </head>
   <body>
     <div class="page-shell">
       <header class="hero">
         <div>
-          <p class="eyebrow">Summary Dashboard (V.20260730.1900)</p>
+          <p class="eyebrow">Summary Dashboard (V.20260730.2000)</p>
           <h1>สรุปรายจ่ายจากชีต `Summary รายจ่าย`</h1>
         </div>
         <div class="hero-actions">
@@ -59,30 +59,32 @@
                   <h2>กราฟงบเทียบหลังเตรียมจ่าย</h2>
                 </div>
               </div>
-              <div class="panel-tabs" role="tablist" aria-label="มุมมองกราฟและเตรียมจ่าย">
-                <button
-                  id="summary-tab"
-                  class="panel-tab is-active"
-                  type="button"
-                  role="tab"
-                  aria-selected="true"
-                  aria-controls="summary-tab-panel"
-                  data-tab-target="summary-tab-panel"
-                >
-                  Summary
-                </button>
-                <button
-                  id="pending-tab"
-                  class="panel-tab"
-                  type="button"
-                  role="tab"
-                  aria-selected="false"
-                  aria-controls="pending-tab-panel"
-                  data-tab-target="pending-tab-panel"
-                >
-                  เตรียมจ่าย
-                </button>
-                <button id="test-write-button" class="panel-tab test-write-button" type="button">ทดสอบเขียนไฟล์</button>
+              <div class="panel-controls">
+                <div class="panel-tabs" role="tablist" aria-label="มุมมองกราฟและเตรียมจ่าย">
+                  <button
+                    id="summary-tab"
+                    class="panel-tab is-active"
+                    type="button"
+                    role="tab"
+                    aria-selected="true"
+                    aria-controls="summary-tab-panel"
+                    data-tab-target="summary-tab-panel"
+                  >
+                    Summary
+                  </button>
+                  <button
+                    id="pending-tab"
+                    class="panel-tab"
+                    type="button"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="pending-tab-panel"
+                    data-tab-target="pending-tab-panel"
+                  >
+                    เตรียมจ่าย
+                  </button>
+                </div>
+                <button id="test-write-button" class="test-write-button" type="button">ทดสอบเขียนไฟล์</button>
               </div>
               <div id="summary-tab-panel" class="tab-panel" role="tabpanel" aria-labelledby="summary-tab">
                 <div id="category-compare" class="category-compare"></div>
@@ -304,7 +306,7 @@
       </div>
     </div>
 
-    <script src="./summary-data.js?v=20260730.1900"></script>
-    <script src="./app.js?v=20260730.1900"></script>
+    <script src="./summary-data.js?v=20260730.2000"></script>
+    <script src="./app.js?v=20260730.2000"></script>
   </body>
 </html>

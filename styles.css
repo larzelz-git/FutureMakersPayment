@@ -333,10 +333,17 @@ h2 {
   display: inline-flex;
   gap: 6px;
   padding: 6px;
-  margin-bottom: 18px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: rgba(45, 91, 79, 0.07);
+}
+
+.panel-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
 }
 
 .panel-tab {
@@ -443,7 +450,18 @@ h2 {
 }
 
 .test-write-button {
-  margin-left: auto;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--forest);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.test-write-button:hover {
+  background: #23483e;
 }
 
 .income-table th {
