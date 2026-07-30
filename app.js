@@ -869,9 +869,6 @@ async function fetchSheetMatrix(sheetName, range) {
 
 async function fetchLiveSummaryData() {
   const fallback = window.SUMMARY_DASHBOARD_DATA;
-  return fallback;
-
-  /* eslint-disable no-unreachable */
   const liveJsonUrl = "";
 
   if (liveJsonUrl) {
@@ -926,7 +923,6 @@ async function fetchLiveSummaryData() {
       actualGrandTotal: payload.actualGrandTotal || fallback.actualGrandTotal,
     };
   }
-  /* eslint-enable no-unreachable */
 
   try {
     return await fetchLiveSummaryDataViaScript();
