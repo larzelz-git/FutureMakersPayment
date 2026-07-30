@@ -1422,7 +1422,10 @@ function setupSourceControls() {
   }
 
   function closeModal() {
-    const sourceConfig = getPendingSourceConfig();
+    const sourceConfig = {
+      ...window.SUMMARY_DASHBOARD_DATA.source,
+      testWriteUrl: sourceTestWriteUrlInput.value.trim(),
+    };
     saveLocalSourceConfig(sourceConfig);
     updateGlobalSource(sourceConfig);
     sourceModal.hidden = true;
