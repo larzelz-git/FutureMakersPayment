@@ -66,6 +66,11 @@ body::before {
   padding: 24px;
 }
 
+.hero-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .eyebrow,
 .section-label {
   margin: 0 0 10px;
