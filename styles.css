@@ -493,12 +493,12 @@ h2 {
   text-align: right;
 }
 
-.pending-table tbody tr.pending-budgeted td {
+.pending-table tbody tr.pending-po-listed td {
   background: rgba(113, 164, 112, 0.16);
 }
 
-.pending-table tbody tr.pending-unbudgeted td {
-  background: rgba(220, 91, 84, 0.16);
+.pending-table tbody tr.pending-po-missing td {
+  background: rgba(220, 68, 61, 0.25);
 }
 
 .income-table td:nth-child(4),

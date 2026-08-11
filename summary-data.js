@@ -11,6 +11,8 @@ window.SUMMARY_DASHBOARD_DATA = {
     pendingRange: "A:G",
     budgetSheetName: "Budget",
     budgetRange: "A:Z",
+    poPurchaseSheetName: "PO จะซื้อ",
+    poPurchaseRange: "A:Z",
     paidSheetName: "จ่ายแล้ว_Unfiltered",
     paidDetailRange: "A:P",
     spreadsheetId: "1fJ6qvATbXqbveDBlqjvVE9Lz5jsRwdW_pXxdYdKheiY",
