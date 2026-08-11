@@ -28,10 +28,12 @@ const SOURCE_URL_KEYS = [
   "pendingSheetName",
   "paidSheetName",
   "budgetSheetName",
+  "poPurchaseSheetName",
   "range",
   "incomeRange",
   "pendingRange",
   "budgetRange",
+  "poPurchaseRange",
   "paidDetailRange",
 ];
 const DETAIL_COLUMNS = [
@@ -346,6 +348,8 @@ function saveLocalSourceConfig(sourceConfig) {
       pendingRange: sourceConfig.pendingRange,
       budgetSheetName: sourceConfig.budgetSheetName,
       budgetRange: sourceConfig.budgetRange,
+      poPurchaseSheetName: sourceConfig.poPurchaseSheetName,
+      poPurchaseRange: sourceConfig.poPurchaseRange,
       paidSheetName: sourceConfig.paidSheetName,
       paidDetailRange: sourceConfig.paidDetailRange,
       liveJsonUrl: sourceConfig.liveJsonUrl,
@@ -519,6 +523,27 @@ function normalizeBudgetPrPoSet(matrix) {
   return new Set(dataMatrix
     .map((row) => String(row[0] || "").trim().toUpperCase())
     .filter(Boolean));
+}
+
+function normalizePoPurchaseSet(matrix) {
+  if (!matrix.length) {
+    return new Set();
+  }
+
+  const headerIndex = matrix.findIndex((row) =>
+    row.some((value) => String(value || "").trim().toUpperCase() === "PR/PO")
+  );
+  const header = headerIndex >= 0 ? matrix[headerIndex] : [];
+  const prPoColumn = header.findIndex(
+    (value) => String(value || "").trim().toUpperCase() === "PR/PO"
+  );
+  const dataRows = headerIndex >= 0 ? matrix.slice(headerIndex + 1) : matrix;
+
+  return new Set(
+    dataRows
+      .map((row) => normalizePrPo(row[prPoColumn >= 0 ? prPoColumn : 0]))
+      .filter(Boolean)
+  );
 }
 
 function normalizePrPo(value) {
@@ -824,6 +849,10 @@ async function fetchLiveSummaryDataViaScript() {
     source.budgetSheetName || "Budget",
     source.budgetRange || "A:Z"
   ).catch(() => []);
+  const poPurchaseMatrix = await fetchSheetMatrixViaScript(
+    source.poPurchaseSheetName || "PO จะซื้อ",
+    source.poPurchaseRange || "A:Z"
+  ).catch(() => []);
   const paidDetailMatrix = await fetchSheetMatrixViaScript(
     source.paidSheetName || DEFAULT_PAID_DETAIL_SHEET_NAME,
     source.paidDetailRange || DEFAULT_PAID_DETAIL_RANGE
@@ -840,6 +869,7 @@ async function fetchLiveSummaryDataViaScript() {
     ...normalizeSheetMatrix(summaryMatrix, fallback),
     pendingRows: normalizePendingMatrix(pendingMatrix),
     budgetPrPoSet: normalizeBudgetPrPoSet(budgetMatrix),
+    poPurchaseSet: normalizePoPurchaseSet(poPurchaseMatrix),
     incomeSummary: normalizeIncomeSummaryMatrix(incomeMatrix),
     ...paidDetailPayload,
   };
@@ -917,6 +947,7 @@ async function fetchLiveSummaryData() {
       budgetPrPoSet: payload.budgetPrPoSet
         ? new Set(payload.budgetPrPoSet)
         : normalizeBudgetPrPoSet(payload.budgetRows || []),
+      poPurchaseSet: normalizePoPurchaseSet(payload.poPurchaseRows || []),
       incomeSummary,
       ...paidDetailPayload,
       grandTotal: payload.grandTotal || fallback.grandTotal,
@@ -939,6 +970,10 @@ async function fetchLiveSummaryData() {
       source.budgetSheetName || "Budget",
       source.budgetRange || "A:Z"
     ).catch(() => []);
+    const poPurchaseMatrix = await fetchSheetMatrix(
+      source.poPurchaseSheetName || "PO จะซื้อ",
+      source.poPurchaseRange || "A:Z"
+    ).catch(() => []);
     const paidDetailMatrix = await fetchSheetMatrix(
       source.paidSheetName || DEFAULT_PAID_DETAIL_SHEET_NAME,
       source.paidDetailRange || DEFAULT_PAID_DETAIL_RANGE
@@ -955,6 +990,7 @@ async function fetchLiveSummaryData() {
       ...normalizeSheetMatrix(summaryMatrix, fallback),
       pendingRows: normalizePendingMatrix(pendingMatrix),
       budgetPrPoSet: normalizeBudgetPrPoSet(budgetMatrix),
+      poPurchaseSet: normalizePoPurchaseSet(poPurchaseMatrix),
       incomeSummary: normalizeIncomeSummaryMatrix(incomeMatrix),
       ...paidDetailPayload,
     };
@@ -1550,7 +1586,7 @@ function parsePendingPaste(text) {
 const pendingSelectedRows = new Set();
 let pendingPreviewRows = [];
 
-function renderPendingPreview(rows, budgetPrPoSet = new Set()) {
+function renderPendingPreview(rows, poPurchaseSet = new Set()) {
   const body = document.getElementById("pending-preview-body");
   const summary = document.getElementById("pending-preview-summary");
   const selectAll = document.getElementById("pending-select-all");
@@ -1576,11 +1612,12 @@ function renderPendingPreview(rows, budgetPrPoSet = new Set()) {
   body.innerHTML = rows
     .map(
       (row, index) => {
-        const isBudgeted = normalizePrPo(row.prPo) && budgetPrPoSet.has(normalizePrPo(row.prPo));
-        const budgetClass = isBudgeted ? "pending-budgeted" : "pending-unbudgeted";
+        const normalizedPrPo = normalizePrPo(row.prPo);
+        const isListedForPurchase = normalizedPrPo && poPurchaseSet.has(normalizedPrPo);
+        const poStatusClass = isListedForPurchase ? "pending-po-listed" : "pending-po-missing";
 
         return `
-        <tr class="${budgetClass}">
+        <tr class="${poStatusClass}">
           <td class="pending-select-column">
             <input
               class="pending-row-checkbox"
@@ -1629,7 +1666,7 @@ function renderPendingPreview(rows, budgetPrPoSet = new Set()) {
         pendingSelectedRows.clear();
       }
 
-      renderPendingPreview(rows, budgetPrPoSet);
+      renderPendingPreview(rows, poPurchaseSet);
     };
   }
 }
@@ -2106,7 +2143,7 @@ function renderDashboard(sourceData) {
   renderTableRows(data);
   renderPendingPreview(
     normalizePendingDisplayRows(sourceData.pendingRows || []),
-    sourceData.budgetPrPoSet || new Set()
+    sourceData.poPurchaseSet || new Set()
   );
   renderIncomeDashboard(incomeRows);
 }
