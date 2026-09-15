@@ -23,6 +23,7 @@ const DEFAULT_PAID_DETAIL_RANGE = "A:P";
 const SOURCE_URL_KEYS = [
   "spreadsheetUrl",
   "spreadsheetId",
+  "spreadsheetTitle",
   "sheetName",
   "incomeSheetName",
   "pendingSheetName",
@@ -340,6 +341,7 @@ function saveLocalSourceConfig(sourceConfig) {
     JSON.stringify({
       spreadsheetUrl: sourceConfig.spreadsheetUrl,
       spreadsheetId: sourceConfig.spreadsheetId,
+      spreadsheetTitle: sourceConfig.spreadsheetTitle,
       sheetName: sourceConfig.sheetName,
       incomeSheetName: sourceConfig.incomeSheetName,
       range: sourceConfig.range,
@@ -1021,6 +1023,7 @@ function renderKpis(data) {
 }
 
 function renderSourceInfo(data) {
+  const dashboardTitle = document.getElementById("expense-dashboard-title");
   const sourceLink = document.getElementById("source-link");
   const sourceSheetName = document.getElementById("source-sheet-name");
   const snapshotDate = document.getElementById("snapshot-date");
@@ -1033,6 +1036,12 @@ function renderSourceInfo(data) {
   if (sourceLink) {
     sourceLink.href = data.source.spreadsheetUrl || "#";
     sourceLink.textContent = data.source.spreadsheetUrl || "-";
+  }
+
+  if (dashboardTitle) {
+    const spreadsheetTitle = data.source.spreadsheetTitle || "Google Sheet";
+    dashboardTitle.textContent = `สรุปรายจ่ายจากชีต \`${spreadsheetTitle}\``;
+    document.title = `สรุปรายจ่าย: ${spreadsheetTitle}`;
   }
 
   if (sourceSheetName) {

@@ -1,8 +1,8 @@
 window.SUMMARY_DASHBOARD_DATA = {
   source: {
-    spreadsheetTitle: "สำเนาของ Costing 2026-07",
+    spreadsheetTitle: "Costing 2026-09",
     spreadsheetUrl:
-      "https://docs.google.com/spreadsheets/d/1fJ6qvATbXqbveDBlqjvVE9Lz5jsRwdW_pXxdYdKheiY/edit?gid=1848093504#gid=1848093504",
+      "https://docs.google.com/spreadsheets/d/1PcyGT90Z0U8JdmmY3t3d6a-bb5nTQRJPA7EV6tws_I4/edit?gid=1848093504#gid=1848093504",
     sheetName: "Summary รายจ่าย",
     range: "A:G",
     incomeSheetName: "Summary รายรับ",
@@ -15,7 +15,7 @@ window.SUMMARY_DASHBOARD_DATA = {
     poPurchaseRange: "A:Z",
     paidSheetName: "จ่ายแล้ว_Unfiltered",
     paidDetailRange: "A:P",
-    spreadsheetId: "1fJ6qvATbXqbveDBlqjvVE9Lz5jsRwdW_pXxdYdKheiY",
+    spreadsheetId: "1PcyGT90Z0U8JdmmY3t3d6a-bb5nTQRJPA7EV6tws_I4",
     liveJsonUrl: "",
     snapshotDate: "2026-07-17",
   },
