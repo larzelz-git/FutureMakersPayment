@@ -71,6 +71,7 @@ function doGet(event) {
     source: {
       spreadsheetId: spreadsheetId,
       spreadsheetUrl: spreadsheetUrl,
+      spreadsheetTitle: spreadsheet.getName(),
       sheetName: sheetName,
       incomeSheetName: incomeSheetName,
       pendingSheetName: pendingSheetName,
@@ -182,11 +183,12 @@ function getSourceConfig() {
 }
 
 function getDefaultSourceConfig() {
-  var spreadsheetId = '1fJ6qvATbXqbveDBlqjvVE9Lz5jsRwdW_pXxdYdKheiY';
+  var spreadsheetId = '1PcyGT90Z0U8JdmmY3t3d6a-bb5nTQRJPA7EV6tws_I4';
 
   return {
     spreadsheetId: spreadsheetId,
     spreadsheetUrl: 'https://docs.google.com/spreadsheets/d/' + spreadsheetId + '/edit',
+    spreadsheetTitle: 'Costing 2026-09',
     sheetName: 'Summary รายจ่าย',
     incomeSheetName: 'Summary รายรับ',
     pendingSheetName: 'เตรียมจ่าย',
@@ -213,6 +215,7 @@ function getRequestSourceConfig(params) {
   }
 
   [
+    'spreadsheetTitle',
     'sheetName',
     'incomeSheetName',
     'pendingSheetName',
@@ -239,6 +242,7 @@ function saveSourceConfig(params) {
   var sourceConfig = {
     spreadsheetId: spreadsheetId,
     spreadsheetUrl: spreadsheetUrl,
+    spreadsheetTitle: params.spreadsheetTitle || defaults.spreadsheetTitle,
     sheetName: params.sheetName || defaults.sheetName,
     incomeSheetName: params.incomeSheetName || defaults.incomeSheetName,
     pendingSheetName: params.pendingSheetName || defaults.pendingSheetName,
