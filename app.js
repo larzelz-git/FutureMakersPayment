@@ -329,9 +329,56 @@ function getSourceConfig() {
       ...urlSource,
     };
 
+    // A shared URL can point to any spreadsheet. Do not carry the title from
+    // the dashboard's default source into that spreadsheet.
+    if ((urlSource.spreadsheetUrl || urlSource.spreadsheetId) && !urlSource.spreadsheetTitle) {
+      sourceConfig.spreadsheetTitle = "";
+    }
+
     return normalizeSourceConfig(sourceConfig);
   } catch (error) {
     return normalizeSourceConfig({ ...defaultSource, ...urlSource });
+  }
+}
+
+function getFilenameFromContentDisposition(value) {
+  if (!value) {
+    return "";
+  }
+
+  const encodedMatch = value.match(/filename\*=UTF-8''([^;]+)/i);
+  const plainMatch = value.match(/filename="?([^";]+)"?/i);
+  const filename = encodedMatch
+    ? decodeURIComponent(encodedMatch[1])
+    : plainMatch
+      ? plainMatch[1]
+      : "";
+
+  return filename.replace(/\.(xlsx|xls|csv)$/i, "").trim();
+}
+
+async function fetchSpreadsheetTitle(source) {
+  const spreadsheetId = source.spreadsheetId || extractSpreadsheetId(source.spreadsheetUrl);
+
+  if (!spreadsheetId) {
+    return "";
+  }
+
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const response = await fetch(`https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=xlsx`, {
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    const title = response.ok ? getFilenameFromContentDisposition(response.headers.get("content-disposition")) : "";
+    response.body?.cancel();
+    return title;
+  } catch (error) {
+    return "";
+  } finally {
+    window.clearTimeout(timeoutId);
   }
 }
 
@@ -2160,14 +2207,31 @@ function renderDashboard(sourceData) {
 async function refreshDashboard() {
   setRefreshDisabled(true);
   setLiveStatus("กำลังดึงข้อมูลล่าสุดจาก Google Sheet...");
+  const source = window.SUMMARY_DASHBOARD_DATA.source;
+  const spreadsheetTitlePromise = fetchSpreadsheetTitle(source);
 
   try {
     const liveData = await fetchLiveSummaryData();
+    const spreadsheetTitle = await spreadsheetTitlePromise;
+
+    if (spreadsheetTitle) {
+      liveData.source.spreadsheetTitle = spreadsheetTitle;
+    }
+
     updateGlobalSource(liveData.source);
     renderDashboard(liveData);
     setLiveStatus("แสดงข้อมูล Snapshot ล่าสุด");
   } catch (error) {
-    renderDashboard(window.SUMMARY_DASHBOARD_DATA);
+    const spreadsheetTitle = await spreadsheetTitlePromise;
+    const fallbackData = {
+      ...window.SUMMARY_DASHBOARD_DATA,
+      source: {
+        ...window.SUMMARY_DASHBOARD_DATA.source,
+        spreadsheetTitle: spreadsheetTitle || window.SUMMARY_DASHBOARD_DATA.source.spreadsheetTitle || "Google Sheet",
+      },
+    };
+    updateGlobalSource(fallbackData.source);
+    renderDashboard(fallbackData);
     setLiveStatus("ดึงสดไม่ได้ ใช้ snapshot ล่าสุดแทน");
     console.warn("Live Google Sheet fetch failed", error);
   } finally {
