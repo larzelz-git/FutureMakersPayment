@@ -254,6 +254,10 @@ function prepareData(sourceData) {
       Math.max(right.budget, right.actual + right.pending) -
       Math.max(left.budget, left.actual + left.pending)
   );
+  const overBudgetTotal = categories.reduce(
+    (sum, category) => sum + Math.max(category.actual + category.pending - category.budget, 0),
+    0
+  );
   const activeRows = rows
     .filter((row) => row.budget > 0 || row.actual > 0)
     .sort((left, right) => Math.max(right.budget, right.actual) - Math.max(left.budget, left.actual));
@@ -263,6 +267,8 @@ function prepareData(sourceData) {
     grandTotal,
     actualGrandTotal,
     pendingGrandTotal,
+    overBudgetTotal,
+    adjustedBudgetTotal: grandTotal + overBudgetTotal,
     incomeSummary: sourceData.incomeSummary || normalizeIncomeSummaryMatrix([]),
     rows,
     pendingRows,
@@ -1052,6 +1058,12 @@ function renderKpis(data) {
 
   const kpis = [
     { label: "งบรวม", value: formatCurrency(data.grandTotal) },
+    {
+      label: "งบรวม + ส่วนเกิน",
+      value: formatCurrency(data.adjustedBudgetTotal),
+      note: `ส่วนเกินทุกหมวด ${formatCurrency(data.overBudgetTotal)}`,
+      emphasized: true,
+    },
     { label: "จ่ายจริงรวม", value: formatCurrency(data.actualGrandTotal) },
     { label: "เตรียมจ่าย", value: formatCurrency(data.pendingGrandTotal) },
     { label: "เหลือจ่าย", value: formatCurrency(remainingBudget) },
@@ -1060,9 +1072,10 @@ function renderKpis(data) {
   root.innerHTML = kpis
     .map(
       (item) => `
-        <article class="kpi-card">
+        <article class="kpi-card${item.emphasized ? " kpi-card-emphasized" : ""}">
           <div class="kpi-label">${item.label}</div>
           <div class="kpi-value">${item.value}</div>
+          ${item.note ? `<div class="kpi-note">${item.note}</div>` : ""}
         </article>
       `
     )
