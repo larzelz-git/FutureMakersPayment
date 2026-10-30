@@ -154,7 +154,7 @@ h2 {
 }
 
 .kpi-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   margin-bottom: 20px;
 }
 
@@ -302,9 +302,21 @@ h2 {
   padding: 20px;
 }
 
+.kpi-card-emphasized {
+  border-color: rgba(200, 109, 74, 0.28);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(217, 157, 61, 0.2));
+}
+
 .kpi-value {
   margin-top: 12px;
   font-size: clamp(1.4rem, 2vw, 2.2rem);
+  font-weight: 700;
+}
+
+.kpi-note {
+  margin-top: 8px;
+  color: var(--terracotta);
+  font-size: 0.78rem;
   font-weight: 700;
 }
 
