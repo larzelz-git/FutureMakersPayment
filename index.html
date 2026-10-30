@@ -10,13 +10,13 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+Thai:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20261030.0001" />
+    <link rel="stylesheet" href="./styles.css?v=20261030.0002" />
   </head>
   <body>
     <div class="page-shell">
       <header class="hero">
         <div>
-          <p class="eyebrow">Summary Dashboard (V.20261030.0001)</p>
+          <p class="eyebrow">Summary Dashboard (V.20261030.0002)</p>
           <h1 id="expense-dashboard-title">สรุปรายจ่ายจากชีต `Costing 2026-09`</h1>
         </div>
         <div class="hero-actions">
@@ -59,71 +59,8 @@
                   <h2>กราฟงบเทียบหลังเตรียมจ่าย</h2>
                 </div>
               </div>
-              <div class="panel-controls">
-                <div class="panel-tabs" role="tablist" aria-label="มุมมองกราฟและเตรียมจ่าย">
-                  <button
-                    id="summary-tab"
-                    class="panel-tab is-active"
-                    type="button"
-                    role="tab"
-                    aria-selected="true"
-                    aria-controls="summary-tab-panel"
-                    data-tab-target="summary-tab-panel"
-                  >
-                    Summary
-                  </button>
-                  <button
-                    id="pending-tab"
-                    class="panel-tab"
-                    type="button"
-                    role="tab"
-                    aria-selected="false"
-                    aria-controls="pending-tab-panel"
-                    data-tab-target="pending-tab-panel"
-                  >
-                    เตรียมจ่าย
-                  </button>
-                </div>
-                <button id="test-write-button" class="test-write-button" type="button">บันทึก Approve</button>
-              </div>
-              <div id="summary-tab-panel" class="tab-panel" role="tabpanel" aria-labelledby="summary-tab">
+              <div id="summary-tab-panel" class="tab-panel">
                 <div id="category-compare" class="category-compare"></div>
-              </div>
-              <div id="pending-tab-panel" class="tab-panel pending-shell" role="tabpanel" aria-labelledby="pending-tab" hidden>
-                <div class="pending-input-panel">
-                  <div class="pending-input-heading">
-                    <div>
-                      <h3>เตรียมจ่าย</h3>
-                      <p>เทียบ PR/PO กับแท็บ PO จะซื้อ · สีแดงคือไม่พบในรายการ</p>
-                    </div>
-                    <div class="pending-summary" id="pending-preview-summary">0 รายการ · ฿0.00</div>
-                  </div>
-                </div>
-                <div class="pending-table-wrap">
-                  <table class="pending-table">
-                    <thead>
-                      <tr>
-                        <th class="pending-select-column">
-                          <label class="pending-select-all-label">
-                            <input id="pending-select-all" type="checkbox" aria-label="เลือกเตรียมจ่ายทั้งหมด" />
-                            <span>เลือก</span>
-                          </label>
-                        </th>
-                        <th>Approve</th>
-                        <th>หมวดหลัก</th>
-                        <th>หมวดย่อย</th>
-                        <th>จ่ายจริงหมวดย่อย</th>
-                        <th>Desc</th>
-                        <th>PR/PO</th>
-                      </tr>
-                    </thead>
-                    <tbody id="pending-preview-body">
-                      <tr>
-                        <td colspan="7" class="pending-empty-cell">ยังไม่มีข้อมูลเตรียมจ่าย</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
               </div>
             </article>
 
@@ -295,34 +232,7 @@
       </div>
     </div>
 
-    <div id="test-write-modal" class="modal-backdrop" hidden>
-      <div class="modal-card test-write-modal-card" role="dialog" aria-modal="true" aria-labelledby="test-write-modal-title">
-        <div class="panel-heading">
-          <div>
-            <p class="section-label">APPROVE UPDATE</p>
-            <h2 id="test-write-modal-title">บันทึก Approve</h2>
-          </div>
-          <button id="test-write-modal-close-button" class="modal-close-button" type="button">ปิด</button>
-        </div>
-        <p>ต้องการเขียน <strong>approve</strong> ให้รายการที่เลือก และล้างรายการที่ไม่ได้เลือกใช่ไหม?</p>
-        <label class="approve-password-field">
-          <span>รหัสผ่านยืนยัน</span>
-          <input
-            id="approve-password-input"
-            class="source-text-input"
-            type="password"
-            autocomplete="off"
-            placeholder="กรอกรหัสผ่าน"
-          />
-        </label>
-        <div class="source-actions">
-          <button id="test-write-cancel-button" class="ghost-button" type="button">ยกเลิก</button>
-          <button id="test-write-confirm-button" class="refresh-button" type="button">ยืนยันบันทึก Approve</button>
-        </div>
-      </div>
-    </div>
-
-    <script src="./summary-data.js?v=20261030.0001"></script>
-    <script src="./app.js?v=20261030.0001"></script>
+    <script src="./summary-data.js?v=20261030.0002"></script>
+    <script src="./app.js?v=20261030.0002"></script>
   </body>
 </html>

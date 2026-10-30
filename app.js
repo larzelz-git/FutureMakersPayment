@@ -1065,7 +1065,6 @@ function renderKpis(data) {
       emphasized: true,
     },
     { label: "จ่ายจริงรวม", value: formatCurrency(data.actualGrandTotal) },
-    { label: "เตรียมจ่าย", value: formatCurrency(data.pendingGrandTotal) },
     { label: "เหลือจ่าย", value: formatCurrency(remainingBudget) },
   ];
 
